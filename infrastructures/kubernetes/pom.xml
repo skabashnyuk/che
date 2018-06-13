@@ -195,6 +195,10 @@
             <artifactId>testng</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.eclipse.che.multiuser</groupId>
+            <artifactId>che-multiuser-machine-authentication</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

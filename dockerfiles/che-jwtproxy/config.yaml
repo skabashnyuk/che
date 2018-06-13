@@ -1,10 +1,9 @@
 jwtproxy:
   verifier_proxies:
   - listen_addr: :4471
-
     verifier:
       upstream: http://localhost:8080/
-      audience: http://nginx/ # host used to talk to the verifier proxy
+      audience: nil
       max_skew: 1m
       max_ttl: 5m
       key_server:

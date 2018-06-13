@@ -7,6 +7,7 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodSpec;
 import io.fabric8.kubernetes.api.model.VolumeBuilder;
 import io.fabric8.kubernetes.api.model.VolumeMount;
+import io.fabric8.kubernetes.client.KubernetesClient;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -20,9 +21,12 @@ import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
 import org.eclipse.che.api.workspace.server.model.impl.ServerConfigImpl;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.environment.InternalMachineConfig;
-import org.eclipse.che.api.workspace.shared.Constants;
+import org.eclipse.che.multiuser.machine.authentication.server.signature.SignatureKeyManager;
+import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.Names;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
+
+import javax.inject.Inject;
 
 /**
  * @author Sergii Leshchenko
@@ -31,15 +35,33 @@ public class JwtProxyProvisioner implements ConfigurationProvisioner<KubernetesE
 
     private static final int JWT_PROXY_MEMORY_LIMIT_BYTES = 128 * 1024 * 1024; //128mb
 
+    private final KubernetesClientFactory kubernetesClientFactory;
+    private final SignatureKeyManager     signatureKeyManager;
+
+    @Inject
+    public JwtProxyProvisioner(KubernetesClientFactory kubernetesClientFactory,
+                               SignatureKeyManager signatureKeyManager) {
+        this.kubernetesClientFactory = kubernetesClientFactory;
+        this.signatureKeyManager = signatureKeyManager;
+    }
+
     @Override
     public void provision(KubernetesEnvironment k8sEnv, RuntimeIdentity identity)
             throws InfrastructureException {
+        KubernetesClient client = kubernetesClientFactory.create(identity.getWorkspaceId());
+        byte[] encodedPublicKey = signatureKeyManager.getKeyPair().getPublic().getEncoded();
+        client.secrets().createOrReplaceWithNew()
+              .withNewMetadata()
+              .withName("jwtproxy-secret")
+              .endMetadata()
+              .withStringData(
+                      ImmutableMap.of("mykey.pub", java.util.Base64.getEncoder().encodeToString(encodedPublicKey)))
+              .done();
 
         Optional<Entry<String, InternalMachineConfig>> wsagentMachineCfgEntryOpt =
                 k8sEnv.getMachines().entrySet().stream()
                       .filter(m -> m.getValue().getServers().containsKey("wsagent/http"))
                       .findAny();
-
 
         if (wsagentMachineCfgEntryOpt.isPresent()) {
             Entry<String, InternalMachineConfig> wsagentMachineCfgEntry = wsagentMachineCfgEntryOpt.get();
@@ -98,7 +120,7 @@ public class JwtProxyProvisioner implements ConfigurationProvisioner<KubernetesE
         PodSpec spec = pod.getSpec();
         spec.getVolumes().add(new VolumeBuilder().withName("secret-verifier-volume")
                                                  .withNewSecret()
-                                                 .withSecretName("secret-verifier-volume")
+                                                 .withSecretName("jwtproxy-secret")
                                                  .endSecret()
                                                  .build());
 
