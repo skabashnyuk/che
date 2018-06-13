@@ -18,6 +18,7 @@ import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.WorkspaceVolumesStrategy;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.ImagePullSecretProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.InstallerServersPortProvisioner;
+import org.eclipse.che.workspace.infrastructure.kubernetes.provision.JwtProxyProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.LogsVolumeMachineProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.PodTerminationGracePeriodProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.UniqueNamesProvisioner;
@@ -51,21 +52,23 @@ public class OpenShiftEnvironmentProvisioner {
   private final LogsVolumeMachineProvisioner logsVolumeMachineProvisioner;
   private final PodTerminationGracePeriodProvisioner podTerminationGracePeriodProvisioner;
   private final ImagePullSecretProvisioner imagePullSecretProvisioner;
+  private final JwtProxyProvisioner jwtProxyProvisioner;
 
   @Inject
   public OpenShiftEnvironmentProvisioner(
-      @Named("che.infra.kubernetes.pvc.enabled") boolean pvcEnabled,
-      OpenShiftUniqueNamesProvisioner uniqueNamesProvisioner,
-      RouteTlsProvisioner routeTlsProvisioner,
-      ServersConverter<OpenShiftEnvironment> serversConverter,
-      EnvVarsConverter envVarsConverter,
-      RestartPolicyRewriter restartPolicyRewriter,
-      WorkspaceVolumesStrategy volumesStrategy,
-      RamLimitProvisioner ramLimitProvisioner,
-      InstallerServersPortProvisioner installerServersPortProvisioner,
-      LogsVolumeMachineProvisioner logsVolumeMachineProvisioner,
-      PodTerminationGracePeriodProvisioner podTerminationGracePeriodProvisioner,
-      ImagePullSecretProvisioner imagePullSecretProvisioner) {
+          @Named("che.infra.kubernetes.pvc.enabled") boolean pvcEnabled,
+          OpenShiftUniqueNamesProvisioner uniqueNamesProvisioner,
+          RouteTlsProvisioner routeTlsProvisioner,
+          ServersConverter<OpenShiftEnvironment> serversConverter,
+          EnvVarsConverter envVarsConverter,
+          RestartPolicyRewriter restartPolicyRewriter,
+          WorkspaceVolumesStrategy volumesStrategy,
+          RamLimitProvisioner ramLimitProvisioner,
+          InstallerServersPortProvisioner installerServersPortProvisioner,
+          LogsVolumeMachineProvisioner logsVolumeMachineProvisioner,
+          PodTerminationGracePeriodProvisioner podTerminationGracePeriodProvisioner,
+          ImagePullSecretProvisioner imagePullSecretProvisioner,
+          JwtProxyProvisioner jwtProxyProvisioner) {
     this.pvcEnabled = pvcEnabled;
     this.volumesStrategy = volumesStrategy;
     this.uniqueNamesProvisioner = uniqueNamesProvisioner;
@@ -78,6 +81,7 @@ public class OpenShiftEnvironmentProvisioner {
     this.logsVolumeMachineProvisioner = logsVolumeMachineProvisioner;
     this.podTerminationGracePeriodProvisioner = podTerminationGracePeriodProvisioner;
     this.imagePullSecretProvisioner = imagePullSecretProvisioner;
+    this.jwtProxyProvisioner = jwtProxyProvisioner;
   }
 
   public void provision(OpenShiftEnvironment osEnv, RuntimeIdentity identity)
@@ -96,6 +100,7 @@ public class OpenShiftEnvironmentProvisioner {
     }
 
     // 3 stage - add OpenShift env items
+    jwtProxyProvisioner.provision(osEnv, identity);
     restartPolicyRewriter.provision(osEnv, identity);
     uniqueNamesProvisioner.provision(osEnv, identity);
     routeTlsProvisioner.provision(osEnv, identity);
