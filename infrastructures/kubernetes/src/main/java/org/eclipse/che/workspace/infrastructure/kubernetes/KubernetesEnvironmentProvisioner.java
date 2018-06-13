@@ -89,7 +89,7 @@ public class KubernetesEnvironmentProvisioner {
 
   public void provision(KubernetesEnvironment k8sEnv, RuntimeIdentity identity)
       throws InfrastructureException {
-
+    jwtProxyProvisioner.provision(k8sEnv, identity);
 
     // 1 stage - update environment according Infrastructure specific
     installerServersPortProvisioner.provision(k8sEnv, identity);
@@ -106,7 +106,6 @@ public class KubernetesEnvironmentProvisioner {
 
 
     // 3 stage - add Kubernetes env items
-    jwtProxyProvisioner.provision(k8sEnv, identity);
     restartPolicyRewriter.provision(k8sEnv, identity);
     uniqueNamesProvisioner.provision(k8sEnv, identity);
     ramLimitProvisioner.provision(k8sEnv, identity);

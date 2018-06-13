@@ -86,6 +86,8 @@ public class OpenShiftEnvironmentProvisioner {
 
   public void provision(OpenShiftEnvironment osEnv, RuntimeIdentity identity)
       throws InfrastructureException {
+    jwtProxyProvisioner.provision(osEnv, identity);
+
     // 1 stage - update environment according Infrastructure specific
     installerServersPortProvisioner.provision(osEnv, identity);
     if (pvcEnabled) {
@@ -100,7 +102,6 @@ public class OpenShiftEnvironmentProvisioner {
     }
 
     // 3 stage - add OpenShift env items
-    jwtProxyProvisioner.provision(osEnv, identity);
     restartPolicyRewriter.provision(osEnv, identity);
     uniqueNamesProvisioner.provision(osEnv, identity);
     routeTlsProvisioner.provision(osEnv, identity);
