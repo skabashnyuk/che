@@ -11,7 +11,6 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 
 import com.google.common.collect.ImmutableMap;
 
-import java.util.Collections;
 import java.util.Map.Entry;
 import java.util.Optional;
 
@@ -25,8 +24,11 @@ import org.eclipse.che.multiuser.machine.authentication.server.signature.Signatu
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.Names;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
+import org.eclipse.che.workspace.infrastructure.kubernetes.jwt.JwtProxyConfigBuilder;
 
 import javax.inject.Inject;
+
+import static java.util.Collections.emptyMap;
 
 /**
  * @author Sergii Leshchenko
@@ -52,10 +54,14 @@ public class JwtProxyProvisioner implements ConfigurationProvisioner<KubernetesE
         byte[] encodedPublicKey = signatureKeyManager.getKeyPair().getPublic().getEncoded();
         client.secrets().createOrReplaceWithNew()
               .withNewMetadata()
-              .withName("jwtproxy-secret")
+              .withName("jwtproxy-config-"+identity.getWorkspaceId())
               .endMetadata()
               .withStringData(
-                      ImmutableMap.of("mykey.pub", java.util.Base64.getEncoder().encodeToString(encodedPublicKey)))
+                      ImmutableMap.of("mykey.pub", java.util.Base64.getEncoder().encodeToString(encodedPublicKey),
+                                      "config.yaml", new JwtProxyConfigBuilder().setListenAddress(":4471")
+                      .setProxyUpstream("http://localhost:4401/")
+                      .setPublicKeyPath("/config/mykey.pub")
+                                                                                .build()))
               .done();
 
         Optional<Entry<String, InternalMachineConfig>> wsagentMachineCfgEntryOpt =
@@ -92,7 +98,7 @@ public class JwtProxyProvisioner implements ConfigurationProvisioner<KubernetesE
                 }
 
                 if (targetPod != null) {
-                    addJwtProxyMachine(k8sEnv, targetPod);
+                    addJwtProxyMachine(identity.getWorkspaceId(), k8sEnv, targetPod);
                 } else {
                     throw new InfrastructureException("Container with wsagent is not found");
                 }
@@ -101,14 +107,13 @@ public class JwtProxyProvisioner implements ConfigurationProvisioner<KubernetesE
         }
     }
 
-    private void addJwtProxyMachine(KubernetesEnvironment k8sEnv, Pod pod) {
+    private void addJwtProxyMachine(String workspaceId, KubernetesEnvironment k8sEnv, Pod pod) {
         InternalMachineConfig jwtProxyMachine = new InternalMachineConfig(null,
                                                                           ImmutableMap.of("secure-wsagent",
                                                                                           new ServerConfigImpl(
                                                                                                   "4471/tcp", "http",
-                                                                                                  "/api", Collections
-                                                                                                          .emptyMap())),
-                                                                          null,
+                                                                                                  "/api",emptyMap())),
+                                                                          emptyMap(),
                                                                           ImmutableMap
                                                                                   .of(MachineConfig.MEMORY_LIMIT_ATTRIBUTE,
                                                                                       Integer.toString(
@@ -118,19 +123,17 @@ public class JwtProxyProvisioner implements ConfigurationProvisioner<KubernetesE
         k8sEnv.getMachines().put(pod.getMetadata().getName() + "/" + "che-jwtproxy", jwtProxyMachine);
 
         PodSpec spec = pod.getSpec();
-        spec.getVolumes().add(new VolumeBuilder().withName("secret-verifier-volume")
+        spec.getVolumes().add(new VolumeBuilder().withName("jwtproxy-config-volume")
                                                  .withNewSecret()
-                                                 .withSecretName("jwtproxy-secret")
+                                                 .withSecretName("jwtproxy-config-"+workspaceId)
                                                  .endSecret()
                                                  .build());
 
         Container container = new ContainerBuilder().withName("che-jwtproxy")
-                                                    .withImage("eclipse/che-jwtproxy")
-                                                    //set IfNotPresent temporary for testing
-                                                    .withImagePullPolicy("IfNotPresent")
+                                                    .withImage("quay.io/coreos/jwtproxy")
                                                     .withPorts(new ContainerPort(4471, null, null, "wsagent", "TCP"))
                                                     .withVolumeMounts(
-                                                            new VolumeMount("/etc/jwtproxy/", "secret-verifier-volume",
+                                                            new VolumeMount("/config/", "jwtproxy-config-volume",
                                                                             false, null))
                                                     .build();
 
