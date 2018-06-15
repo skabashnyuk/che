@@ -38,7 +38,7 @@ public class JwtProxyProvisioner implements ConfigurationProvisioner<KubernetesE
     private static final int JWT_PROXY_MEMORY_LIMIT_BYTES = 128 * 1024 * 1024; //128mb
 
     private static final String PUBLIC_KEY_HEADER = "-----BEGIN PUBLIC KEY-----\n";
-    private static final String PUBLIC_KEY_FOOTER = "\n -----END PUBLIC KEY-----\n";
+    private static final String PUBLIC_KEY_FOOTER = "\n-----END PUBLIC KEY-----";
 
     private final KubernetesClientFactory kubernetesClientFactory;
     private final SignatureKeyManager     signatureKeyManager;
@@ -133,7 +133,7 @@ public class JwtProxyProvisioner implements ConfigurationProvisioner<KubernetesE
                                                  .build());
 
         Container container = new ContainerBuilder().withName("che-jwtproxy")
-                                                    .withImage("quay.io/coreos/jwtproxy")
+                                                    .withImage("sleshchenko/jwtproxy")
                                                     .withPorts(new ContainerPort(4471, null, null, "wsagent", "TCP"))
                                                     .withVolumeMounts(
                                                             new VolumeMount("/config/", "jwtproxy-config-volume",
