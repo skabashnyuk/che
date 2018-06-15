@@ -37,6 +37,9 @@ public class JwtProxyProvisioner implements ConfigurationProvisioner<KubernetesE
 
     private static final int JWT_PROXY_MEMORY_LIMIT_BYTES = 128 * 1024 * 1024; //128mb
 
+    private static final String PUBLIC_KEY_HEADER = "-----BEGIN PUBLIC KEY-----\n";
+    private static final String PUBLIC_KEY_FOOTER = "\n -----END PUBLIC KEY-----\n";
+
     private final KubernetesClientFactory kubernetesClientFactory;
     private final SignatureKeyManager     signatureKeyManager;
 
@@ -57,7 +60,7 @@ public class JwtProxyProvisioner implements ConfigurationProvisioner<KubernetesE
               .withName("jwtproxy-config-"+identity.getWorkspaceId())
               .endMetadata()
               .withStringData(
-                      ImmutableMap.of("mykey.pub", java.util.Base64.getEncoder().encodeToString(encodedPublicKey),
+                      ImmutableMap.of("mykey.pub", PUBLIC_KEY_HEADER + java.util.Base64.getEncoder().encodeToString(encodedPublicKey) + PUBLIC_KEY_FOOTER,
                                       "config.yaml", new JwtProxyConfigBuilder().setListenAddress(":4471")
                       .setProxyUpstream("http://localhost:4401/")
                       .setPublicKeyPath("/config/mykey.pub")

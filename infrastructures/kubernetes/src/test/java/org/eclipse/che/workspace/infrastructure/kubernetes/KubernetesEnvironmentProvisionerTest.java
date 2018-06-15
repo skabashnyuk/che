@@ -79,7 +79,8 @@ public class KubernetesEnvironmentProvisionerTest {
             securityContextProvisioner,
             podTerminationGracePeriodProvisioner,
             externalServerIngressTlsProvisioner,
-            imagePullSecretProvisioner, jwtProxyProvisioner);
+            imagePullSecretProvisioner,
+            jwtProxyProvisioner);
     provisionOrder =
         inOrder(
             installerServersPortProvisioner,

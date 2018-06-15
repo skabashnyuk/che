@@ -104,7 +104,6 @@ public class KubernetesEnvironmentProvisioner {
       volumesStrategy.provision(k8sEnv, identity);
     }
 
-
     // 3 stage - add Kubernetes env items
     restartPolicyRewriter.provision(k8sEnv, identity);
     uniqueNamesProvisioner.provision(k8sEnv, identity);
