@@ -18,9 +18,9 @@ import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.WorkspaceVolumesStrategy;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.ImagePullSecretProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.InstallerServersPortProvisioner;
-import org.eclipse.che.workspace.infrastructure.kubernetes.provision.JwtProxyProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.LogsVolumeMachineProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.PodTerminationGracePeriodProvisioner;
+import org.eclipse.che.workspace.infrastructure.kubernetes.provision.ServersAuthenticationProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.UniqueNamesProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.env.EnvVarsConverter;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.limits.ram.RamLimitProvisioner;
@@ -52,23 +52,23 @@ public class OpenShiftEnvironmentProvisioner {
   private final LogsVolumeMachineProvisioner logsVolumeMachineProvisioner;
   private final PodTerminationGracePeriodProvisioner podTerminationGracePeriodProvisioner;
   private final ImagePullSecretProvisioner imagePullSecretProvisioner;
-  private final JwtProxyProvisioner jwtProxyProvisioner;
+  private final ServersAuthenticationProvisioner authenticationProvisioner;
 
   @Inject
   public OpenShiftEnvironmentProvisioner(
-          @Named("che.infra.kubernetes.pvc.enabled") boolean pvcEnabled,
-          OpenShiftUniqueNamesProvisioner uniqueNamesProvisioner,
-          RouteTlsProvisioner routeTlsProvisioner,
-          ServersConverter<OpenShiftEnvironment> serversConverter,
-          EnvVarsConverter envVarsConverter,
-          RestartPolicyRewriter restartPolicyRewriter,
-          WorkspaceVolumesStrategy volumesStrategy,
-          RamLimitProvisioner ramLimitProvisioner,
-          InstallerServersPortProvisioner installerServersPortProvisioner,
-          LogsVolumeMachineProvisioner logsVolumeMachineProvisioner,
-          PodTerminationGracePeriodProvisioner podTerminationGracePeriodProvisioner,
-          ImagePullSecretProvisioner imagePullSecretProvisioner,
-          JwtProxyProvisioner jwtProxyProvisioner) {
+      @Named("che.infra.kubernetes.pvc.enabled") boolean pvcEnabled,
+      OpenShiftUniqueNamesProvisioner uniqueNamesProvisioner,
+      RouteTlsProvisioner routeTlsProvisioner,
+      ServersConverter<OpenShiftEnvironment> serversConverter,
+      EnvVarsConverter envVarsConverter,
+      RestartPolicyRewriter restartPolicyRewriter,
+      WorkspaceVolumesStrategy volumesStrategy,
+      RamLimitProvisioner ramLimitProvisioner,
+      InstallerServersPortProvisioner installerServersPortProvisioner,
+      LogsVolumeMachineProvisioner logsVolumeMachineProvisioner,
+      PodTerminationGracePeriodProvisioner podTerminationGracePeriodProvisioner,
+      ImagePullSecretProvisioner imagePullSecretProvisioner,
+      ServersAuthenticationProvisioner authenticationProvisioner) {
     this.pvcEnabled = pvcEnabled;
     this.volumesStrategy = volumesStrategy;
     this.uniqueNamesProvisioner = uniqueNamesProvisioner;
@@ -81,12 +81,12 @@ public class OpenShiftEnvironmentProvisioner {
     this.logsVolumeMachineProvisioner = logsVolumeMachineProvisioner;
     this.podTerminationGracePeriodProvisioner = podTerminationGracePeriodProvisioner;
     this.imagePullSecretProvisioner = imagePullSecretProvisioner;
-    this.jwtProxyProvisioner = jwtProxyProvisioner;
+    this.authenticationProvisioner = authenticationProvisioner;
   }
 
   public void provision(OpenShiftEnvironment osEnv, RuntimeIdentity identity)
       throws InfrastructureException {
-    jwtProxyProvisioner.provision(osEnv, identity);
+    authenticationProvisioner.provision(osEnv, identity);
 
     // 1 stage - update environment according Infrastructure specific
     installerServersPortProvisioner.provision(osEnv, identity);

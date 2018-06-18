@@ -19,7 +19,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.Workspa
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.ImagePullSecretProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.IngressTlsProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.InstallerServersPortProvisioner;
-import org.eclipse.che.workspace.infrastructure.kubernetes.provision.JwtProxyProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.LogsVolumeMachineProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.PodTerminationGracePeriodProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.SecurityContextProvisioner;
@@ -57,7 +56,6 @@ public class KubernetesEnvironmentProvisionerTest {
   @Mock private PodTerminationGracePeriodProvisioner podTerminationGracePeriodProvisioner;
   @Mock private IngressTlsProvisioner externalServerIngressTlsProvisioner;
   @Mock private ImagePullSecretProvisioner imagePullSecretProvisioner;
-  @Mock private JwtProxyProvisioner jwtProxyProvisioner;
 
   private KubernetesEnvironmentProvisioner osInfraProvisioner;
 
@@ -79,8 +77,7 @@ public class KubernetesEnvironmentProvisionerTest {
             securityContextProvisioner,
             podTerminationGracePeriodProvisioner,
             externalServerIngressTlsProvisioner,
-            imagePullSecretProvisioner,
-            jwtProxyProvisioner);
+            imagePullSecretProvisioner);
     provisionOrder =
         inOrder(
             installerServersPortProvisioner,
@@ -111,7 +108,6 @@ public class KubernetesEnvironmentProvisionerTest {
     provisionOrder.verify(restartPolicyRewriter).provision(eq(k8sEnv), eq(runtimeIdentity));
     provisionOrder.verify(uniqueNamesProvisioner).provision(eq(k8sEnv), eq(runtimeIdentity));
     provisionOrder.verify(ramLimitProvisioner).provision(eq(k8sEnv), eq(runtimeIdentity));
-    provisionOrder.verify(jwtProxyProvisioner).provision(eq(k8sEnv), eq(runtimeIdentity));
     provisionOrder
         .verify(externalServerIngressTlsProvisioner)
         .provision(eq(k8sEnv), eq(runtimeIdentity));

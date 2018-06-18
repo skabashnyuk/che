@@ -20,7 +20,6 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.namespace.pvc.Workspa
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.ImagePullSecretProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.IngressTlsProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.InstallerServersPortProvisioner;
-import org.eclipse.che.workspace.infrastructure.kubernetes.provision.JwtProxyProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.LogsVolumeMachineProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.PodTerminationGracePeriodProvisioner;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.SecurityContextProvisioner;
@@ -53,7 +52,6 @@ public class KubernetesEnvironmentProvisioner {
   private final PodTerminationGracePeriodProvisioner podTerminationGracePeriodProvisioner;
   private final IngressTlsProvisioner externalServerIngressTlsProvisioner;
   private final ImagePullSecretProvisioner imagePullSecretProvisioner;
-  private final JwtProxyProvisioner jwtProxyProvisioner;
 
   @Inject
   public KubernetesEnvironmentProvisioner(
@@ -69,8 +67,7 @@ public class KubernetesEnvironmentProvisioner {
       SecurityContextProvisioner securityContextProvisioner,
       PodTerminationGracePeriodProvisioner podTerminationGracePeriodProvisioner,
       IngressTlsProvisioner externalServerIngressTlsProvisioner,
-      ImagePullSecretProvisioner imagePullSecretProvisioner,
-      JwtProxyProvisioner jwtProxyProvisioner) {
+      ImagePullSecretProvisioner imagePullSecretProvisioner) {
     this.pvcEnabled = pvcEnabled;
     this.volumesStrategy = volumesStrategy;
     this.uniqueNamesProvisioner = uniqueNamesProvisioner;
@@ -84,13 +81,10 @@ public class KubernetesEnvironmentProvisioner {
     this.podTerminationGracePeriodProvisioner = podTerminationGracePeriodProvisioner;
     this.externalServerIngressTlsProvisioner = externalServerIngressTlsProvisioner;
     this.imagePullSecretProvisioner = imagePullSecretProvisioner;
-    this.jwtProxyProvisioner = jwtProxyProvisioner;
   }
 
   public void provision(KubernetesEnvironment k8sEnv, RuntimeIdentity identity)
       throws InfrastructureException {
-    jwtProxyProvisioner.provision(k8sEnv, identity);
-
     // 1 stage - update environment according Infrastructure specific
     installerServersPortProvisioner.provision(k8sEnv, identity);
     if (pvcEnabled) {
