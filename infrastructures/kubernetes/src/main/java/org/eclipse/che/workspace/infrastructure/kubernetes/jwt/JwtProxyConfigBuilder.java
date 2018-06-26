@@ -47,6 +47,8 @@ public class JwtProxyConfigBuilder {
             + "          issuer: wsmaster\n"
             + "          key_id: mykey\n"
             + "          public_key_path: %s\n"
+            + "      nonce_storage:\n"
+            + "        type: void\n"
             + "      claims_verifiers:\n"
             + "      - type: static\n"
             + "        options:\n"

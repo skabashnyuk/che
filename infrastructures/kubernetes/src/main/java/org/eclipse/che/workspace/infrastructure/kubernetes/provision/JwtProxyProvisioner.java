@@ -109,7 +109,7 @@ public class JwtProxyProvisioner {
     Container container =
         new ContainerBuilder()
             .withName(serverName + "-jwtproxy")
-            .withImage("sleshchenko/jwtproxy")
+            .withImage("mshaposh/jwtproxy2")
             .withPorts(new ContainerPort(4471, null, null, "wsagent", "TCP"))
             .withVolumeMounts(new VolumeMount("/config/", "jwtproxy-config-volume", false, null))
             .withArgs("-config", configFilePath)
