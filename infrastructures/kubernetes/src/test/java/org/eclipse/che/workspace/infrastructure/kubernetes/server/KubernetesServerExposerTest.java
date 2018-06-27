@@ -92,7 +92,7 @@ public class KubernetesServerExposerTest {
   }
 
   @Test
-  public void shouldExposeContainerPortAndCreateServiceForServer() {
+  public void shouldExposeContainerPortAndCreateServiceForServer() throws Exception {
     // given
     ServerConfigImpl httpServerConfig =
         new ServerConfigImpl("8080/tcp", "http", "/api", ATTRIBUTES_MAP);
@@ -112,7 +112,8 @@ public class KubernetesServerExposerTest {
   }
 
   @Test
-  public void shouldExposeContainerPortAndCreateServiceAndForServerWhenTwoServersHasTheSamePort() {
+  public void shouldExposeContainerPortAndCreateServiceAndForServerWhenTwoServersHasTheSamePort()
+      throws Exception {
     // given
     ServerConfigImpl httpServerConfig =
         new ServerConfigImpl("8080/tcp", "http", "/api", ATTRIBUTES_MAP);
@@ -144,7 +145,8 @@ public class KubernetesServerExposerTest {
   }
 
   @Test
-  public void shouldExposeContainerPortsAndCreateServiceForServerWhenTwoServersHasDifferentPorts() {
+  public void shouldExposeContainerPortsAndCreateServiceForServerWhenTwoServersHasDifferentPorts()
+      throws Exception {
     // given
     ServerConfigImpl httpServerConfig =
         new ServerConfigImpl("8080/tcp", "http", "/api", ATTRIBUTES_MAP);
@@ -176,8 +178,8 @@ public class KubernetesServerExposerTest {
   }
 
   @Test
-  public void
-      shouldExposeTcpContainerPortsAndCreateServiceAndForServerWhenProtocolIsMissedInPort() {
+  public void shouldExposeTcpContainerPortsAndCreateServiceAndForServerWhenProtocolIsMissedInPort()
+      throws Exception {
     // given
     ServerConfigImpl httpServerConfig =
         new ServerConfigImpl("8080", "http", "/api", ATTRIBUTES_MAP);
@@ -199,7 +201,7 @@ public class KubernetesServerExposerTest {
   }
 
   @Test
-  public void shouldNotAddAdditionalContainerPortWhenItIsAlreadyExposed() {
+  public void shouldNotAddAdditionalContainerPortWhenItIsAlreadyExposed() throws Exception {
     // given
     ServerConfigImpl httpServerConfig =
         new ServerConfigImpl("8080/tcp", "http", "/api", ATTRIBUTES_MAP);
@@ -226,7 +228,8 @@ public class KubernetesServerExposerTest {
   }
 
   @Test
-  public void shouldAddAdditionalContainerPortWhenThereIsTheSameButWithDifferentProtocol() {
+  public void shouldAddAdditionalContainerPortWhenThereIsTheSameButWithDifferentProtocol()
+      throws Exception {
     // given
     ServerConfigImpl udpServerConfig =
         new ServerConfigImpl("8080/udp", "udp", "/api", ATTRIBUTES_MAP);
