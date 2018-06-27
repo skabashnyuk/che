@@ -35,6 +35,7 @@ import org.eclipse.che.api.core.model.workspace.config.ServerConfig;
 import org.eclipse.che.api.workspace.server.model.impl.ServerConfigImpl;
 import org.eclipse.che.workspace.infrastructure.kubernetes.Annotations;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
+import org.eclipse.che.workspace.infrastructure.kubernetes.provision.server.secure.SecureServerExposer;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
@@ -50,6 +51,9 @@ import org.testng.annotations.Test;
 public class KubernetesServerExposerTest {
 
   @Mock private ExternalServerExposerStrategy<KubernetesEnvironment> externalServerExposerStrategy;
+  // TODO Add checking of invocations
+  @Mock private SecureServerExposer<KubernetesEnvironment> secureServerExposer;
+
   private static final Map<String, String> ATTRIBUTES_MAP = singletonMap("key", "value");
   private static final Map<String, String> INTERNAL_SERVER_ATTRIBUTE_MAP =
       singletonMap(ServerConfig.INTERNAL_SERVER_ATTRIBUTE, Boolean.TRUE.toString());
@@ -79,7 +83,12 @@ public class KubernetesServerExposerTest {
         KubernetesEnvironment.builder().setPods(ImmutableMap.of("pod", pod)).build();
     this.serverExposer =
         new KubernetesServerExposer<>(
-            externalServerExposerStrategy, MACHINE_NAME, pod, container, kubernetesEnvironment);
+            externalServerExposerStrategy,
+            secureServerExposer,
+            MACHINE_NAME,
+            pod,
+            container,
+            kubernetesEnvironment);
   }
 
   @Test

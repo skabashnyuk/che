@@ -33,10 +33,17 @@ public interface ExternalServerExposerStrategy<T extends KubernetesEnvironment> 
    * @param portToServicePort specific service ports to be exposed externally
    * @param externalServers server configs of servers to be exposed externally
    */
-  void exposeExternalServers(
+  void expose(
       T k8sEnv,
       String machineName,
       String serviceName,
       Map<String, ServicePort> portToServicePort,
       Map<String, ServerConfig> externalServers);
+
+  default void expose(
+      T k8sEnv,
+      String machineName,
+      String serviceName,
+      ServicePort servicePort,
+      Map<String, ServerConfig> externalServers) {}
 }

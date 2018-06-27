@@ -78,7 +78,7 @@ public class DefaultHostIngressExternalServerExposerTest {
     Map<String, ServerConfig> serversToExpose = ImmutableMap.of("http-server", httpServerConfig);
 
     // when
-    externalServerExposer.exposeExternalServers(
+    externalServerExposer.expose(
         kubernetesEnvironment, MACHINE_NAME, SERVICE_NAME, portToServicePort, serversToExpose);
 
     // then
@@ -114,7 +114,7 @@ public class DefaultHostIngressExternalServerExposerTest {
             "ws-server", wsServerConfig);
 
     // when
-    externalServerExposer.exposeExternalServers(
+    externalServerExposer.expose(
         kubernetesEnvironment, MACHINE_NAME, SERVICE_NAME, portToServicePort, serversToExpose);
 
     // then
@@ -167,7 +167,7 @@ public class DefaultHostIngressExternalServerExposerTest {
             "ws-server", wsServerConfig);
 
     // when
-    externalServerExposer.exposeExternalServers(
+    externalServerExposer.expose(
         kubernetesEnvironment, MACHINE_NAME, SERVICE_NAME, portToServicePort, serversToExpose);
 
     // then

@@ -34,10 +34,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.eclipse.che.api.core.model.workspace.config.ServerConfig;
 import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
+import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.workspace.infrastructure.kubernetes.Annotations;
 import org.eclipse.che.workspace.infrastructure.kubernetes.Constants;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
 import org.eclipse.che.workspace.infrastructure.kubernetes.provision.UniqueNamesProvisioner;
+import org.eclipse.che.workspace.infrastructure.kubernetes.provision.server.secure.SecureServerExposer;
 
 /**
  * Helps to modify {@link KubernetesEnvironment} to make servers that are configured by {@link
@@ -100,23 +102,26 @@ public class KubernetesServerExposer<T extends KubernetesEnvironment> {
   public static final int SERVER_UNIQUE_PART_SIZE = 8;
   public static final String SERVER_PREFIX = "server";
 
-  private final ExternalServerExposerStrategy<T> kubernetesExternalServerExposerStrategy;
+  private final ExternalServerExposerStrategy<T> externalServerExposer;
+  private final SecureServerExposer<T> secureServerExposer;
   private final String machineName;
   private final Container container;
   private final Pod pod;
-  private final T kubernetesEnvironment;
+  private final T k8sEnv;
 
   public KubernetesServerExposer(
-      ExternalServerExposerStrategy<T> kubernetesExternalServerExposerStrategy,
+      ExternalServerExposerStrategy<T> externalServerExposer,
+      SecureServerExposer<T> secureServerExposer,
       String machineName,
       Pod pod,
       Container container,
-      T kubernetesEnvironment) {
-    this.kubernetesExternalServerExposerStrategy = kubernetesExternalServerExposerStrategy;
+      T k8sEnv) {
+    this.externalServerExposer = externalServerExposer;
+    this.secureServerExposer = secureServerExposer;
     this.machineName = machineName;
     this.pod = pod;
     this.container = container;
-    this.kubernetesEnvironment = kubernetesEnvironment;
+    this.k8sEnv = k8sEnv;
   }
 
   /**
@@ -129,20 +134,27 @@ public class KubernetesServerExposer<T extends KubernetesEnvironment> {
    * @param servers servers to expose
    * @see UniqueNamesProvisioner#provision(KubernetesEnvironment, RuntimeIdentity)
    */
-  public void expose(Map<String, ? extends ServerConfig> servers) {
+  public void expose(Map<String, ? extends ServerConfig> servers) throws InfrastructureException {
     Map<String, ServerConfig> internalServers = new HashMap<>();
     Map<String, ServerConfig> externalServers = new HashMap<>();
+    Map<String, ServerConfig> secureServers = new HashMap<>();
 
     servers.forEach(
         (key, value) -> {
           if ("true".equals(value.getAttributes().get(INTERNAL_SERVER_ATTRIBUTE))) {
             internalServers.put(key, value);
+
           } else {
-            externalServers.put(key, value);
+            // TODO Comment that it doesnot make sense to make internal servers secure
+            if ("true".equals(value.getAttributes().get("secure"))) {
+              secureServers.put(key, value);
+            } else {
+              externalServers.put(key, value);
+            }
           }
         });
 
-    Map<String, ServicePort> portToServicePort = exposePort(servers.values());
+    Map<String, ServicePort> portToServicePort = exposePorts(servers.values());
     Service service =
         new ServiceBuilder()
             .withName(generate(SERVER_PREFIX, SERVER_UNIQUE_PART_SIZE) + '-' + machineName)
@@ -153,11 +165,15 @@ public class KubernetesServerExposer<T extends KubernetesEnvironment> {
             .build();
 
     String serviceName = service.getMetadata().getName();
-    kubernetesEnvironment.getServices().put(serviceName, service);
-    exposeExternalServers(serviceName, portToServicePort, externalServers);
+    k8sEnv.getServices().put(serviceName, service);
+
+    externalServerExposer.expose(
+        k8sEnv, machineName, serviceName, portToServicePort, externalServers);
+
+    secureServerExposer.expose(machineName, serviceName, portToServicePort, secureServers);
   }
 
-  private Map<String, ServicePort> exposePort(Collection<? extends ServerConfig> serverConfig) {
+  private Map<String, ServicePort> exposePorts(Collection<? extends ServerConfig> serverConfig) {
     Map<String, ServicePort> exposedPorts = new HashMap<>();
     Set<String> portsToExpose =
         serverConfig.stream().map(ServerConfig::getPort).collect(Collectors.toSet());
@@ -194,43 +210,41 @@ public class KubernetesServerExposer<T extends KubernetesEnvironment> {
     return exposedPorts;
   }
 
-  private void exposeExternalServers(
-      String serviceName,
-      Map<String, ServicePort> portToServicePort,
-      Map<String, ServerConfig> externalServers) {
+  // TODO Take a look. Is it OK to make it public?
+  public static class ServiceBuilder {
 
-    kubernetesExternalServerExposerStrategy.exposeExternalServers(
-        kubernetesEnvironment, machineName, serviceName, portToServicePort, externalServers);
-  }
-
-  private static class ServiceBuilder {
     private String name;
     private String machineName;
     private final Map<String, String> selector = new HashMap<>();
     private List<ServicePort> ports = Collections.emptyList();
     private Map<String, ? extends ServerConfig> serversConfigs = Collections.emptyMap();
 
-    private ServiceBuilder withName(String name) {
+    public ServiceBuilder withName(String name) {
       this.name = name;
       return this;
     }
 
-    private ServiceBuilder withSelectorEntry(String key, String value) {
+    public ServiceBuilder withSelectorEntry(String key, String value) {
       selector.put(key, value);
       return this;
     }
 
-    private ServiceBuilder withPorts(List<ServicePort> ports) {
+    public ServiceBuilder withPorts(List<ServicePort> ports) {
       this.ports = ports;
       return this;
     }
 
-    private ServiceBuilder withServers(Map<String, ? extends ServerConfig> serversConfigs) {
+    public ServiceBuilder withServers(Map<String, ? extends ServerConfig> serversConfigs) {
       this.serversConfigs = serversConfigs;
       return this;
     }
 
-    private Service build() {
+    public ServiceBuilder withMachineName(String machineName) {
+      this.machineName = machineName;
+      return this;
+    }
+
+    public Service build() {
       io.fabric8.kubernetes.api.model.ServiceBuilder builder =
           new io.fabric8.kubernetes.api.model.ServiceBuilder();
       return builder
@@ -247,11 +261,6 @@ public class KubernetesServerExposer<T extends KubernetesEnvironment> {
           .withPorts(ports)
           .endSpec()
           .build();
-    }
-
-    public ServiceBuilder withMachineName(String machineName) {
-      this.machineName = machineName;
-      return this;
     }
   }
 }

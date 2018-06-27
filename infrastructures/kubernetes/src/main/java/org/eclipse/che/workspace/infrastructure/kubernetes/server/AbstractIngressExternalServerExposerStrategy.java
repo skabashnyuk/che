@@ -29,7 +29,7 @@ public abstract class AbstractIngressExternalServerExposerStrategy
     implements ExternalServerExposerStrategy<KubernetesEnvironment> {
 
   @Override
-  public void exposeExternalServers(
+  public void expose(
       KubernetesEnvironment k8sEnv,
       String machineName,
       String serviceName,
@@ -45,6 +45,11 @@ public abstract class AbstractIngressExternalServerExposerStrategy
               .stream()
               .filter(e -> parseInt(e.getValue().getPort().split("/")[0]) == port)
               .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+      if (ingressesServers.isEmpty()) {
+        // no services found so no need to create a route
+        continue;
+      }
 
       Ingress ingress = generateIngress(machineName, serviceName, servicePort, ingressesServers);
 

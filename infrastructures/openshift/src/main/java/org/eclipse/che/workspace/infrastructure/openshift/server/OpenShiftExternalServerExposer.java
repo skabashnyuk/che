@@ -75,7 +75,9 @@ import org.eclipse.che.workspace.infrastructure.openshift.environment.OpenShiftE
  * spec:
  *   to:
  *     name: dev-machine              ---->> Service.metadata.name
+ *     //TODO Check if it is right doc maybe route.spec.port.targetPort is right one
  *     targetPort: [8080|web-app]     ---->> Service.spec.ports[0].[port|name]
+ *
  * </pre>
  *
  * <p>For accessing publicly accessible server user will use route host. For accessing
@@ -90,7 +92,25 @@ public class OpenShiftExternalServerExposer
     implements ExternalServerExposerStrategy<OpenShiftEnvironment> {
 
   @Override
-  public void exposeExternalServers(
+  public void expose(
+      OpenShiftEnvironment openShiftEnvironment,
+      String machineName,
+      String serviceName,
+      ServicePort servicePort,
+      Map<String, ServerConfig> externalServers) {
+    Route route =
+        new RouteBuilder()
+            .withName(serviceName + '-' + servicePort.getName())
+            .withMachineName(machineName)
+            .withTargetPort(servicePort.getName())
+            .withServers(externalServers)
+            .withTo(serviceName)
+            .build();
+    openShiftEnvironment.getRoutes().put(route.getMetadata().getName(), route);
+  }
+
+  @Override
+  public void expose(
       OpenShiftEnvironment openShiftEnvironment,
       String machineName,
       String serviceName,
@@ -105,6 +125,10 @@ public class OpenShiftExternalServerExposer
               .filter(e -> parseInt(e.getValue().getPort().split("/")[0]) == port)
               .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
 
+      if (routesServers.isEmpty()) {
+        // no services found so no need to create a route
+        continue;
+      }
       Route route =
           new RouteBuilder()
               .withName(serviceName + '-' + servicePort.getName())
