@@ -77,7 +77,8 @@ public class KubernetesInfraModule extends AbstractModule {
 
     install(
         new FactoryModuleBuilder()
-            .build(new TypeLiteral<JwtProxySecureServerExposerFactory<KubernetesEnvironment>>() {}));
+            .build(
+                new TypeLiteral<JwtProxySecureServerExposerFactory<KubernetesEnvironment>>() {}));
 
     bind(WorkspacePVCCleaner.class).asEagerSingleton();
     bind(RemoveNamespaceOnWorkspaceRemove.class).asEagerSingleton();

@@ -146,7 +146,7 @@ public class OpenShiftServerExposerTest {
   @Test
   public void
       shouldExposeContainerPortAndCreateServiceAndRouteForServerWhenTwoServersHasTheSamePort()
-      throws InfrastructureException {
+          throws InfrastructureException {
     // given
     ServerConfigImpl httpServerConfig =
         new ServerConfigImpl("8080/tcp", "http", "/api", ATTRIBUTES_MAP);
@@ -180,7 +180,7 @@ public class OpenShiftServerExposerTest {
   @Test
   public void
       shouldExposeContainerPortsAndCreateServiceAndRoutesForServerWhenTwoServersHasDifferentPorts()
-      throws InfrastructureException {
+          throws InfrastructureException {
     // given
     ServerConfigImpl httpServerConfig =
         new ServerConfigImpl("8080/tcp", "http", "/api", ATTRIBUTES_MAP);
@@ -214,7 +214,7 @@ public class OpenShiftServerExposerTest {
   @Test
   public void
       shouldExposeTcpContainerPortsAndCreateServiceAndRouteForServerWhenProtocolIsMissedInPort()
-      throws InfrastructureException {
+          throws InfrastructureException {
     // given
     ServerConfigImpl httpServerConfig =
         new ServerConfigImpl("8080", "http", "/api", ATTRIBUTES_MAP);
