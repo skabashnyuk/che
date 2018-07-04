@@ -51,6 +51,7 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.server.external.Exter
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.external.ExternalServerExposerStrategyProvider;
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.external.MultiHostIngressExternalServerExposer;
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.external.SingleHostIngressExternalServerExposer;
+import org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.jwtproxy.JwtProxySecureServerExposerFactory;
 import org.eclipse.che.workspace.infrastructure.kubernetes.wsnext.KubernetesWorkspaceNextApplier;
 
 /** @author Sergii Leshchenko */
@@ -70,6 +71,12 @@ public class KubernetesInfraModule extends AbstractModule {
     install(new FactoryModuleBuilder().build(KubernetesRuntimeFactory.class));
     install(new FactoryModuleBuilder().build(KubernetesBootstrapperFactory.class));
     install(new FactoryModuleBuilder().build(StartSynchronizerFactory.class));
+
+    install(
+        new FactoryModuleBuilder()
+            .build(
+                new TypeLiteral<JwtProxySecureServerExposerFactory<KubernetesEnvironment>>() {}));
+
     bind(WorkspacePVCCleaner.class).asEagerSingleton();
     bind(RemoveNamespaceOnWorkspaceRemove.class).asEagerSingleton();
 

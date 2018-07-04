@@ -16,6 +16,7 @@ import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
 import org.eclipse.che.workspace.infrastructure.kubernetes.environment.KubernetesEnvironment;
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.external.ExternalServerExposerStrategy;
 import org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.SecureServerExposer.DefaultSecureServerExposer;
+import org.eclipse.che.workspace.infrastructure.kubernetes.server.secure.jwtproxy.JwtProxySecureServerExposerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,15 +28,18 @@ public class SecureServerExposerFactory<T extends KubernetesEnvironment> {
   private final String serverExposer;
 
   private final ExternalServerExposerStrategy<T> exposerStrategy;
+  private final JwtProxySecureServerExposerFactory<T> jwtProxySecureServerExposerFactory;
 
   @Inject
   public SecureServerExposerFactory(
       @Named("che.agents.auth_enabled") boolean agentsAuthEnabled,
       @Named("che.agents.auth.secure_server_exposer") String serverExposer,
-      ExternalServerExposerStrategy<T> exposerStrategy) {
+      ExternalServerExposerStrategy<T> exposerStrategy,
+      JwtProxySecureServerExposerFactory<T> jwtProxySecureServerExposerFactory) {
     this.agentsAuthEnabled = agentsAuthEnabled;
     this.serverExposer = serverExposer;
     this.exposerStrategy = exposerStrategy;
+    this.jwtProxySecureServerExposerFactory = jwtProxySecureServerExposerFactory;
   }
 
   /**
@@ -49,6 +53,8 @@ public class SecureServerExposerFactory<T extends KubernetesEnvironment> {
     }
 
     switch (serverExposer) {
+      case "jwtproxy":
+        return jwtProxySecureServerExposerFactory.create(identity);
       case "default":
         return new DefaultSecureServerExposer<>(exposerStrategy);
       default:
