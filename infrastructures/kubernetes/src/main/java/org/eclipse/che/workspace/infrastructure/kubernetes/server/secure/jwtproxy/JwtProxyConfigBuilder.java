@@ -59,7 +59,9 @@ public class JwtProxyConfigBuilder {
                   + "      claims_verifiers:\n"
                   + "      - type: static\n"
                   + "        options:\n"
-                  + "          iss: wsmaster\n",
+                  + "          iss: wsmaster\n"
+                  + "      nonce_storage:\n"
+                  + "        type: void\n",
               verifierProxy.listenPort,
               verifierProxy.upstream,
               workspaceId));
