@@ -46,12 +46,12 @@ commands:
   - name: build
     actions:
       - type: exec
-        component: che-server-dev
+        component: maven
         command: mvn clean install -Pnative -DskipIntegrationTests
         workdir: /projects/che
   - name: build without tests
     actions:
       - type: exec
-        component: che-server-dev
+        component: maven
         command: mvn clean install -Pnative -DskipTests=true
         workdir: /projects/che
