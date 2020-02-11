@@ -10,6 +10,22 @@ components:
     volumes:
       - name: m2
         containerPath: /home/user/.m2
+    env:
+      - name: MAVEN_CONFIG
+        value: ""
+      - name: MAVEN_OPTS
+        value: "-XX:MaxRAMPercentage=50.0 -XX:+UseParallelGC -XX:MinHeapFreeRatio=10
+        -XX:MaxHeapFreeRatio=20 -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90
+        -Dsun.zip.disableMemoryMapping=true -Xms20m -Djava.security.egd=file:/dev/./urandom
+        -Duser.home=/home/user"
+      - name: JAVA_OPTS
+        value: "-XX:MaxRAMPercentage=50.0 -XX:+UseParallelGC -XX:MinHeapFreeRatio=10
+        -XX:MaxHeapFreeRatio=20 -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90
+        -Dsun.zip.disableMemoryMapping=true -Xms20m -Djava.security.egd=file:/dev/./urandom"
+      - name: JAVA_TOOL_OPTIONS
+        value: "-XX:MaxRAMPercentage=50.0 -XX:+UseParallelGC -XX:MinHeapFreeRatio=10
+        -XX:MaxHeapFreeRatio=20 -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90
+        -Dsun.zip.disableMemoryMapping=true -Xms20m -Djava.security.egd=file:/dev/./urandom"
   - type: dockerimage
     image: 'quay.io/eclipse/che-server:nightly'
     alias: che-server-runtime
@@ -42,11 +58,11 @@ commands:
     actions:
       - type: exec
         component: maven
-        command: mvn clean install -Pnative -DskipIntegrationTests
+        command: mvn clean install -Pnative -DskipIntegrationTests -pl \!dashboard,\!workspace-loader
         workdir: /projects/che
   - name: build without tests
     actions:
       - type: exec
         component: maven
-        command: mvn clean install -Pnative -DskipTests=true
+        command: mvn clean install -Pnative -DskipTests=true -pl \!dashboard,\!workspace-loader
         workdir: /projects/che

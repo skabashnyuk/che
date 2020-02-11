@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.core.metrics;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
@@ -20,6 +21,7 @@ import java.io.IOException;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystems;
 import java.util.function.ToDoubleFunction;
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +31,17 @@ import org.slf4j.LoggerFactory;
 public class FileStoresMeterBinder implements MeterBinder {
 
   private static final Logger LOG = LoggerFactory.getLogger(FileStoresMeterBinder.class);
+  private final Iterable<FileStore> fileStores;
+
+  @Inject
+  public FileStoresMeterBinder() {
+    this.fileStores = FileSystems.getDefault().getFileStores();
+  }
+
+  @VisibleForTesting
+  FileStoresMeterBinder(Iterable<FileStore> fileStores) {
+    this.fileStores = fileStores;
+  }
 
   @Override
   public void bindTo(MeterRegistry registry) {

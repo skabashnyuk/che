@@ -11,26 +11,46 @@
  */
 package org.eclipse.che.core.metrics;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
 
-import io.micrometer.core.instrument.Gauge;
+import com.google.common.collect.Lists;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import java.util.Collection;
+import java.nio.file.FileStore;
+import java.nio.file.FileSystems;
+import java.util.ArrayList;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 public class FileStoresMeterTest {
 
-  @Test
-  public void shouldBindFileStores() {
-    MeterRegistry registry = new SimpleMeterRegistry();
+  MeterRegistry registry;
+  // Sometimes during test execution number of FileStore can change.
+  // To avoid false test failures this data collected only once.
+  private static final Iterable<FileStore> FILE_STORES = FileSystems.getDefault().getFileStores();
 
-    new FileStoresMeterBinder().bindTo(registry);
-    Collection<Gauge> df = registry.get("disk.free").gauges();
+  @BeforeClass
+  public void setup() {
+    registry = new SimpleMeterRegistry();
+    new FileStoresMeterBinder(FILE_STORES).bindTo(registry);
+  }
 
-    assertNotNull(df);
-    assertTrue(df.size() > 0);
-    assertEquals(df.size(), registry.get("disk.total").gauges().size());
-    assertEquals(df.size(), registry.get("disk.usable").gauges().size());
+  @Test(dataProvider = "fileStores")
+  public void shouldBindFileStores(FileStore fileStore) {
+
+    assertEquals(registry.get("disk.free").tag("path", fileStore.toString()).gauges().size(), 1);
+    assertEquals(registry.get("disk.total").tag("path", fileStore.toString()).gauges().size(), 1);
+    assertEquals(registry.get("disk.usable").tag("path", fileStore.toString()).gauges().size(), 1);
+  }
+
+  @DataProvider
+  public Object[][] fileStores() {
+    ArrayList<FileStore> fileStores = Lists.newArrayList(FILE_STORES);
+    FileStore[][] result = new FileStore[fileStores.size()][1];
+    for (int i = 0; i < fileStores.size(); i++) {
+      result[i][0] = fileStores.get(i);
+    }
+    return result;
   }
 }
