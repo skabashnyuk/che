@@ -69,7 +69,7 @@ public class GithubURLParserTest {
   }
 
   /** Compare parsing */
-  @Test(dataProvider = "parsingBadRepository")
+  @Test(dataProvider = "parsingBadRepository", expectedExceptions = IllegalArgumentException.class)
   public void checkParsingBadRepositoryDoNotModifiesInitialInput(String url, String repository) {
     GithubUrl githubUrl = githubUrlParser.parse(url);
     assertEquals(githubUrl.getRepository(), repository);
@@ -133,7 +133,9 @@ public class GithubURLParserTest {
     return new Object[][]{
         {"https://github.com/eclipse/che .git", "che .git"},
         {"https://github.com/eclipse/.git", ".git"},
-        {"https://github.com/eclipse/myB@dR&pository.git", "myB@dR&pository.git"}
+        {"https://github.com/eclipse/myB@dR&pository.git", "myB@dR&pository.git"},
+        {"https://github.com/eclipse/іфвафі", "myB@dR&pository.git"},
+        {"https://github.com/eclipse/.", "myB@dR&pository.git"}
     };
   }
 

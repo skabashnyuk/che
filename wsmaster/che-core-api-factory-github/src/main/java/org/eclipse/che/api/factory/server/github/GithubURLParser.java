@@ -44,8 +44,8 @@ public class GithubURLParser {
           Pattern.DOTALL);
 
   /** Regexp to check if repository name contains .git extension and make matching group w/out it */
-  protected static final Pattern GIT_EXTENSION_PATTERN =
-      Pattern.compile("^([\\w\\d._-]+(?=\\.git))(?:\\.git)?$");
+  protected static final Pattern GITHUB_REPO =
+      Pattern.compile("^(?<asdf>[\\w-][\\w.-]*?)(?>\\.git)?");
 
   public boolean isValid(@NotNull String url) {
     return GITHUB_PATTERN.matcher(url).matches();
@@ -63,9 +63,14 @@ public class GithubURLParser {
 
     String repoUser = matcher.group("repoUser");
     String repoName = matcher.group("repoName");
-    Matcher gitExtensionMatcher = GIT_EXTENSION_PATTERN.matcher(repoName);
+    Matcher gitExtensionMatcher = GITHUB_REPO.matcher(repoName);
     if (gitExtensionMatcher.matches()) {
       repoName = gitExtensionMatcher.group(1);
+    }else{
+      throw new IllegalArgumentException(
+              String.format(
+                      "The given Pull Request github url %s is not a valid Pull Request URL github url. Unable to extract the data",
+                      url));
     }
     String branchName = matcher.group("branchName");
 
