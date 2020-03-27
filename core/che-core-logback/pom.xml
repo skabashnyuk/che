@@ -19,9 +19,9 @@
         <groupId>org.eclipse.che.core</groupId>
         <version>7.11.0-SNAPSHOT</version>
     </parent>
-    <artifactId>che-core-commons-logback</artifactId>
+    <artifactId>che-core-logback</artifactId>
     <packaging>jar</packaging>
-    <name>Che Core :: Commons :: Commons Logback</name>
+    <name>Che Core :: Logback</name>
     <dependencies>
         <dependency>
             <groupId>ch.qos.logback</groupId>
