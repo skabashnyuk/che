@@ -21,7 +21,7 @@
     </parent>
     <artifactId>che-core-logback</artifactId>
     <packaging>jar</packaging>
-    <name>Che Core :: Logback</name>
+    <name>Che Core :: Commons :: Logback</name>
     <dependencies>
         <dependency>
             <groupId>ch.qos.logback</groupId>
