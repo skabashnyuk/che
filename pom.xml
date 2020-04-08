@@ -53,6 +53,11 @@
                 <version>${version.jsr305.plugin}</version>
             </dependency>
             <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>logging-interceptor</artifactId>
+                <version>${com.squareup.okhttp3.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.apache.tomcat</groupId>
                 <artifactId>tomcat-catalina</artifactId>
                 <version>${org.apache.tomcat.version}</version>

@@ -36,9 +36,12 @@ import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.logging.HttpLoggingInterceptor;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Sergii Leshchenko
@@ -46,6 +49,8 @@ import org.eclipse.che.workspace.infrastructure.kubernetes.KubernetesClientFacto
  */
 @Singleton
 public class OpenShiftClientFactory extends KubernetesClientFactory {
+
+  private static final Logger LOG = LoggerFactory.getLogger(OpenShiftClientFactory.class);
 
   private static final String AUTHORIZATION = "Authorization";
   private static final String AUTHORIZE_PATH =
@@ -206,6 +211,8 @@ public class OpenShiftClientFactory extends KubernetesClientFactory {
   }
 
   private OpenShiftClient createOC(Config config) {
+    HttpLoggingInterceptor logging = new HttpLoggingInterceptor(message -> LOG.info(message));
+    logging.setLevel(HttpLoggingInterceptor.Level.BODY);
     OkHttpClient clientHttpClient =
         getHttpClient().newBuilder().authenticator(Authenticator.NONE).build();
     OkHttpClient.Builder builder = clientHttpClient.newBuilder();
@@ -215,6 +222,7 @@ public class OpenShiftClientFactory extends KubernetesClientFactory {
             .addInterceptor(
                 new OpenShiftOAuthInterceptor(clientHttpClient, OpenShiftConfig.wrap(config)))
             .addInterceptor(new ImpersonatorInterceptor(config))
+            .addInterceptor(logging)
             .build();
 
     return new UnclosableOpenShiftClient(clientHttpClient, config);

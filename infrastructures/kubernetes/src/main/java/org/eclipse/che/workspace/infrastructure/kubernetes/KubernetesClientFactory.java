@@ -34,8 +34,11 @@ import okhttp3.EventListener;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.logging.HttpLoggingInterceptor;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.commons.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Sergii Leshchenko
@@ -43,6 +46,8 @@ import org.eclipse.che.commons.annotation.Nullable;
  */
 @Singleton
 public class KubernetesClientFactory {
+
+  private static final Logger LOG = LoggerFactory.getLogger(KubernetesClientFactory.class);
 
   /** {@link OkHttpClient} instance shared by all Kubernetes clients. */
   private OkHttpClient httpClient;
@@ -195,6 +200,9 @@ public class KubernetesClientFactory {
    * config} parameter.
    */
   private KubernetesClient create(Config config) {
+    HttpLoggingInterceptor logging = new HttpLoggingInterceptor(message -> LOG.info(message));
+    logging.setLevel(HttpLoggingInterceptor.Level.BODY);
+
     OkHttpClient clientHttpClient =
         httpClient.newBuilder().authenticator(Authenticator.NONE).build();
     OkHttpClient.Builder builder = clientHttpClient.newBuilder();
@@ -203,6 +211,7 @@ public class KubernetesClientFactory {
         builder
             .addInterceptor(buildKubernetesInterceptor(config))
             .addInterceptor(new ImpersonatorInterceptor(config))
+            .addInterceptor(logging)
             .build();
 
     return new UnclosableKubernetesClient(clientHttpClient, config);
