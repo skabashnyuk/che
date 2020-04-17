@@ -595,6 +595,29 @@ public class WorkspaceManager {
     return workspaceDao.getTotalCount();
   }
 
+  /**
+   * Get number of workspaces with specific attribute.
+   *
+   * @param attributeName the name of workspace attribute that has to be exist.
+   * @return workspace count
+   * @throws ServerException when any error occurs
+   */
+  public long getTotalCountWithAttribute(String attributeName) throws ServerException {
+    return workspaceDao.getTotalCountWithAttribute(attributeName);
+  }
+
+  /**
+   * Get map with the numbers of workspaces with specific attribute group by it's value.
+   *
+   * @param attributeName the name of workspace attribute that we want to get statistic group by.
+   * @return workspace count
+   * @throws ServerException when any error occurs
+   */
+  public Map<String, Long> getTotalCountWithAttributeGroupByValue(String attributeName)
+      throws ServerException {
+    return workspaceDao.getTotalCountWithAttributeGroupByValue(attributeName);
+  }
+
   private WorkspaceImpl doCreateWorkspace(
       WorkspaceConfig config, Account account, Map<String, String> attributes, boolean isTemporary)
       throws ConflictException, ServerException {

@@ -69,6 +69,14 @@ import org.eclipse.persistence.descriptors.DescriptorEventAdapter;
       query = "SELECT COUNT(w) " + "FROM Workspace w " + "WHERE w.account.name = :namespace "),
   @NamedQuery(name = "Workspace.getTotalCount", query = "SELECT COUNT(w) FROM Workspace w"),
   @NamedQuery(
+      name = "Workspace.getTotalCountWithAttribute",
+      query =
+          "SELECT COUNT(w) FROM Workspace w inner join  w.attributes a WHERE KEY(a)= :attributes_key"),
+  @NamedQuery(
+      name = "Workspace.getTotalCountWithAttributeGroupByValue",
+      query =
+          "SELECT COUNT(w) as wsCount , VALUE(a) as attrValue FROM Workspace w inner join  w.attributes a WHERE KEY(a)= :attributes_key GROUP BY VALUE(a)"),
+  @NamedQuery(
       name = "Workspace.getByTemporaryCount",
       query = "SELECT COUNT(w) " + "FROM Workspace w " + "WHERE w.isTemporary = :temporary ")
 })

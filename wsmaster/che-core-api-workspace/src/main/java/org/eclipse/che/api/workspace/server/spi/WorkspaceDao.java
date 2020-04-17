@@ -11,6 +11,7 @@
  */
 package org.eclipse.che.api.workspace.server.spi;
 
+import java.util.Map;
 import java.util.Optional;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
@@ -142,4 +143,23 @@ public interface WorkspaceDao {
    * @throws ServerException when any error occurs
    */
   long getTotalCount() throws ServerException;
+
+  /**
+   * Get number of workspaces with specific attribute.
+   *
+   * @param attributeName the name of workspace attribute that has to be exist.
+   * @return workspace count
+   * @throws ServerException when any error occurs
+   */
+  long getTotalCountWithAttribute(String attributeName) throws ServerException;
+
+  /**
+   * Get map with the numbers of workspaces with specific attribute group by it's value.
+   *
+   * @param attributeName the name of workspace attribute that we want to get statistic group by.
+   * @return workspace count
+   * @throws ServerException when any error occurs
+   */
+  Map<String, Long> getTotalCountWithAttributeGroupByValue(String attributeName)
+      throws ServerException;
 }

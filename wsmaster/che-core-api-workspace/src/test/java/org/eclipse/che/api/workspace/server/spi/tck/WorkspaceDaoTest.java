@@ -133,6 +133,32 @@ public class WorkspaceDaoTest {
   }
 
   @Test
+  public void shouldBeAbleToCountWorkspacesWithAttr() throws ServerException {
+    assertEquals(workspaceDao.getTotalCountWithAttribute("attr2"), COUNT_OF_WORKSPACES);
+  }
+
+  @Test
+  public void shouldBeAbleToCountWorkspacesWithAttrIfAttrNotExist() throws ServerException {
+    assertEquals(workspaceDao.getTotalCountWithAttribute("attr2XX"), 0L);
+  }
+
+  @Test
+  public void shouldBeAbleToCountWorkspacesWithAttrGroupByAttrValueIfAttrNotExist()
+      throws ServerException {
+    assertTrue(workspaceDao.getTotalCountWithAttributeGroupByValue("attr2XX").isEmpty());
+  }
+
+  @Test
+  public void shouldBeAbleToCountWorkspacesWithAttrGroupByAttrValue() throws ServerException {
+    assertEquals(
+        workspaceDao.getTotalCountWithAttributeGroupByValue("attr2"),
+        ImmutableMap.of("value2", 5L));
+    assertEquals(
+        workspaceDao.getTotalCountWithAttributeGroupByValue("from"),
+        ImmutableMap.of("wsConfig", 4L, "devfile", 1L));
+  }
+
+  @Test
   public void shouldBeAbleToCountNewWorkspaces() throws ServerException, TckRepositoryException {
     // given
     // when
@@ -863,9 +889,7 @@ public class WorkspaceDaoTest {
     workspace.setAttributes(
         new HashMap<>(
             ImmutableMap.of(
-                "attr1", "value1",
-                "attr2", "value2",
-                "attr3", "value3")));
+                "attr1", "value1", "attr2", "value2", "attr3", "value3", "from", "wsConfig")));
     workspace.setConfig(wCfg);
     return workspace;
   }
@@ -881,9 +905,7 @@ public class WorkspaceDaoTest {
     workspace.setAttributes(
         new HashMap<>(
             ImmutableMap.of(
-                "attr1", "value1",
-                "attr2", "value2",
-                "attr3", "value3")));
+                "attr1", "value1", "attr2", "value2", "attr3", "value3", "from", "devfile")));
     return workspace;
   }
 

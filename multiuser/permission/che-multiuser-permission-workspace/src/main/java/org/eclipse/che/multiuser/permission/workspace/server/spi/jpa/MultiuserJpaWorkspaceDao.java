@@ -19,6 +19,7 @@ import static org.eclipse.che.api.core.Pages.iterate;
 
 import com.google.inject.persist.Transactional;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
@@ -243,6 +244,36 @@ public class MultiuserJpaWorkspaceDao implements WorkspaceDao {
           .get()
           .createNamedQuery("Workspace.getTotalCount", Long.class)
           .getSingleResult();
+    } catch (RuntimeException x) {
+      throw new ServerException(x.getLocalizedMessage(), x);
+    }
+  }
+
+  @Override
+  @Transactional
+  public long getTotalCountWithAttribute(String attributeName) throws ServerException {
+    try {
+      return managerProvider
+          .get()
+          .createNamedQuery("Workspace.getTotalCountWithAttribute", Long.class)
+          .setParameter("attributes_key", attributeName)
+          .getSingleResult();
+    } catch (RuntimeException x) {
+      throw new ServerException(x.getLocalizedMessage(), x);
+    }
+  }
+
+  @Override
+  @Transactional
+  public Map<String, Long> getTotalCountWithAttributeGroupByValue(String attributeName)
+      throws ServerException {
+    try {
+      return managerProvider
+          .get()
+          .createNamedQuery("Workspace.getTotalCountWithAttributeGroupByValue", Object[].class)
+          .setParameter("attributes_key", attributeName)
+          .getResultStream()
+          .collect(Collectors.toMap(obj -> ((String) obj[1]), obj -> ((Long) obj[0])));
     } catch (RuntimeException x) {
       throw new ServerException(x.getLocalizedMessage(), x);
     }

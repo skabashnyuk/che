@@ -14,6 +14,7 @@ package org.eclipse.che.multiuser.permission.workspace.server.jpa;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import java.util.Arrays;
@@ -67,13 +68,36 @@ public class MultiuserJpaWorkspaceDaoTest {
           new WorkspaceImpl(
               "ws1",
               account,
-              new WorkspaceConfigImpl("wrksp1", "", "cfg1", null, null, null, null)),
+              new WorkspaceConfigImpl("wrksp1", "", "cfg1", null, null, null, null),
+              null,
+              ImmutableMap.of(
+                  "param1", "value1",
+                  "param2", "value2",
+                  "param3", "value3"),
+              false,
+              null),
           new WorkspaceImpl(
               "ws2",
               account,
-              new WorkspaceConfigImpl("wrksp2", "", "cfg2", null, null, null, null)),
+              new WorkspaceConfigImpl("wrksp2", "", "cfg2", null, null, null, null),
+              null,
+              ImmutableMap.of(
+                  "param1", "value1",
+                  "param2", "value2",
+                  "param3", "value3"),
+              false,
+              null),
           new WorkspaceImpl(
-              "ws3", account, new WorkspaceConfigImpl("wrksp3", "", "cfg3", null, null, null, null))
+              "ws3",
+              account,
+              new WorkspaceConfigImpl("wrksp3", "", "cfg3", null, null, null, null),
+              null,
+              ImmutableMap.of(
+                  "param1", "value1",
+                  "param2", "value2",
+                  "param3", "value3"),
+              false,
+              null)
         };
     Injector injector = Guice.createInjector(new WorkspaceTckModule());
     manager = injector.getInstance(EntityManager.class);
@@ -130,6 +154,28 @@ public class MultiuserJpaWorkspaceDaoTest {
   @Test
   public void shouldGetTotalWorkspaceCount() throws ServerException {
     assertEquals(dao.getTotalCount(), 3);
+  }
+
+  @Test
+  public void shouldBeAbleToCountWorkspacesWithAttr() throws ServerException {
+    assertEquals(dao.getTotalCountWithAttribute("param2"), 3);
+  }
+
+  @Test
+  public void shouldBeAbleToCountWorkspacesWithAttrIfAttrNotExist() throws ServerException {
+    assertEquals(dao.getTotalCountWithAttribute("attr2XX"), 0L);
+  }
+
+  @Test
+  public void shouldBeAbleToCountWorkspacesWithAttrGroupByAttrValueIfAttrNotExist()
+      throws ServerException {
+    assertTrue(dao.getTotalCountWithAttributeGroupByValue("attr2XX").isEmpty());
+  }
+
+  @Test
+  public void shouldBeAbleToCountWorkspacesWithAttrGroupByAttrValue() throws ServerException {
+    assertEquals(
+        dao.getTotalCountWithAttributeGroupByValue("param1"), ImmutableMap.of("value1", 3L));
   }
 
   @AfterClass
