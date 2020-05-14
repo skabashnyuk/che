@@ -43,7 +43,11 @@ import org.eclipse.che.api.factory.server.model.impl.PoliciesImpl;
 import org.eclipse.che.api.factory.server.spi.FactoryDao;
 import org.eclipse.che.api.factory.shared.Constants;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
+import org.eclipse.che.api.workspace.server.model.impl.devfile.CommandImpl;
+import org.eclipse.che.api.workspace.server.model.impl.devfile.ComponentImpl;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.DevfileImpl;
+import org.eclipse.che.api.workspace.server.model.impl.devfile.ProjectImpl;
+import org.eclipse.che.api.workspace.server.model.impl.devfile.SourceImpl;
 import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.commons.test.tck.TckListener;
 import org.eclipse.che.commons.test.tck.repository.TckRepository;
@@ -214,9 +218,7 @@ public class FactoryDaoTest {
   public void shouldFindFactoryByEmbeddedAttributes() throws Exception {
     final List<Pair<String, String>> attributes =
         ImmutableList.of(
-            Pair.of("policies.referer", "referrer"),
-            Pair.of("policies.create", "perClick"),
-            Pair.of("workspace.defaultEnv", "env1"));
+            Pair.of("policies.referer", "referrer"), Pair.of("policies.create", "perClick"));
     final FactoryImpl factory1 = factories[1];
     final FactoryImpl factory3 = factories[3];
     factory1.getPolicies().setCreate("perAccount");
@@ -295,9 +297,46 @@ public class FactoryDaoTest {
   }
 
   private static DevfileImpl createDevfile(int index) {
-    DevfileImpl devfile = new DevfileImpl();
-    devfile.setName("cfgName_" + index);
-    return devfile;
+    return DevfileImpl.builder()
+        .setApiVersion("1.0.0")
+        .setName("petclinic-dev-environment" + index)
+        .setProjects(
+            ImmutableList.of(
+                new ProjectImpl(
+                    "petclinic",
+                    new SourceImpl(
+                        "git",
+                        "git@github.com:spring-projects/spring-petclinic.git",
+                        null,
+                        null,
+                        null,
+                        null,
+                        null),
+                    null)))
+        .setComponents(
+            ImmutableList.of(
+                new ComponentImpl("cheEditor", "eclipse/che-theia/0.0.3"),
+                new ComponentImpl(
+                    "cheEditor",
+                    "org.eclipse.chetheia-jdtls:0.0.3",
+                    ImmutableMap.of("java.home", "/home/user/jdk11", "java.jtg.memory", "12345")),
+                new ComponentImpl(
+                    "openshift",
+                    null,
+                    "petclinic.yaml",
+                    null,
+                    ImmutableMap.of("app.kubernetes.io/name", "mysql"),
+                    null)))
+        .setCommands(
+            ImmutableList.of(
+                new CommandImpl(
+                    "build",
+                    ImmutableList.of(
+                        new org.eclipse.che.api.workspace.server.model.impl.devfile.ActionImpl(
+                            "exec", "jdt.ls", "run.sh", null, null, null)),
+                    null,
+                    null)))
+        .build();
   }
 
   //  private static WorkspaceConfigImpl createWorkspaceConfig(int index) {

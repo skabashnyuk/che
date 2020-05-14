@@ -278,6 +278,22 @@ public class DevfileImpl implements Devfile {
       return this;
     }
 
+    public DevfileImplBuilder setName(String name) {
+      if (metadata == null) {
+        metadata = new MetadataImpl();
+        ((MetadataImpl) metadata).setName(name);
+      }
+      return this;
+    }
+
+    public DevfileImplBuilder setGenerateName(String generateName) {
+      if (metadata == null) {
+        metadata = new MetadataImpl();
+        ((MetadataImpl) metadata).setGenerateName(generateName);
+      }
+      return this;
+    }
+
     public DevfileImplBuilder setComponents(List<? extends Component> components) {
       this.components = components;
       return this;
