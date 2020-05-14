@@ -18,7 +18,7 @@ package org.eclipse.che.api.factory.shared;
  */
 public final class Constants {
 
-  public static final String CURRENT_VERSION = "4.0";
+  public static final String CURRENT_VERSION = "5.0";
 
   // factory links rel attributes
   public static final String IMAGE_REL_ATT = "image";

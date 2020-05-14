@@ -29,7 +29,7 @@ import org.eclipse.che.api.factory.shared.dto.IdeDto;
 import org.eclipse.che.api.factory.shared.dto.OnAppLoadedDto;
 import org.eclipse.che.api.factory.shared.dto.OnProjectsLoadedDto;
 import org.eclipse.che.api.factory.shared.dto.PoliciesDto;
-import org.eclipse.che.api.workspace.shared.dto.ProjectConfigDto;
+import org.eclipse.che.api.workspace.shared.dto.devfile.ProjectDto;
 
 /**
  * Validates values of factory parameters.
@@ -48,7 +48,7 @@ public abstract class FactoryBaseValidator {
    * @throws BadRequestException when source projects in the factory is invalid
    */
   protected void validateProjects(FactoryDto factory) throws BadRequestException {
-    for (ProjectConfigDto project : factory.getWorkspace().getProjects()) {
+    for (ProjectDto project : factory.getDevfile().getProjects()) {
       final String projectName = project.getName();
       if (null != projectName && !PROJECT_NAME_VALIDATOR.matcher(projectName).matches()) {
         throw new BadRequestException(
@@ -56,7 +56,7 @@ public abstract class FactoryBaseValidator {
                 + "digits or these following special characters -._.");
       }
 
-      if (project.getPath().indexOf('/', 1) == -1) {
+      if (project.getClonePath().indexOf('/', 1) == -1) {
 
         if (project.getSource() == null) {
           throw new BadRequestException(

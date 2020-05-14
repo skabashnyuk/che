@@ -23,9 +23,6 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +54,7 @@ import org.eclipse.che.api.core.model.user.User;
 import org.eclipse.che.api.core.model.workspace.config.ProjectConfig;
 import org.eclipse.che.api.core.rest.Service;
 import org.eclipse.che.api.factory.server.builder.FactoryBuilder;
+import org.eclipse.che.api.factory.shared.Constants;
 import org.eclipse.che.api.factory.shared.dto.AuthorDto;
 import org.eclipse.che.api.factory.shared.dto.FactoryDto;
 import org.eclipse.che.api.user.server.PreferenceManager;
@@ -303,9 +301,9 @@ public class FactoryService extends Service {
     excludeProjectsWithoutLocation(workspace, path);
     final FactoryDto factoryDto =
         DtoFactory.newDto(FactoryDto.class)
-            .withV("4.0")
-            .withWorkspace(
-                org.eclipse.che.api.workspace.server.DtoConverter.asDto(workspace.getConfig()));
+            .withV(Constants.CURRENT_VERSION)
+            .withDevfile(
+                org.eclipse.che.api.workspace.server.DtoConverter.asDto(workspace.getDevfile()));
     return Response.ok(factoryDto, APPLICATION_JSON)
         .header(CONTENT_DISPOSITION, "attachment; filename=factory.json")
         .build();
@@ -460,41 +458,6 @@ public class FactoryService extends Service {
       }
     }
   }
-
-  /**
-   * Creates factory image from input stream. InputStream should be closed manually.
-   *
-   * @param is input stream with image data
-   * @param mediaType media type of image
-   * @param name image name
-   * @return factory image, if {@param is} has no content then empty factory image will be returned
-   * @throws BadRequestException when factory image exceeded maximum size
-   * @throws ServerException when any server errors occurs
-   */
-  public static FactoryImage createImage(InputStream is, String mediaType, String name)
-      throws BadRequestException, ServerException {
-    try {
-      final ByteArrayOutputStream out = new ByteArrayOutputStream();
-      final byte[] buffer = new byte[1024];
-      int read;
-      while ((read = is.read(buffer, 0, buffer.length)) != -1) {
-        out.write(buffer, 0, read);
-        if (out.size() > 1024 * 1024) {
-          throw new BadRequestException("Maximum upload size exceeded.");
-        }
-      }
-
-      if (out.size() == 0) {
-        return new FactoryImage();
-      }
-      out.flush();
-
-      return new FactoryImage(out.toByteArray(), mediaType, name);
-    } catch (IOException ioEx) {
-      throw new ServerException(ioEx.getLocalizedMessage());
-    }
-  }
-
   /**
    * Checks object reference is not {@code null}
    *

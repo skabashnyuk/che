@@ -45,20 +45,15 @@ public class GithubFactoryParametersResolver extends DefaultFactoryParameterReso
   /** Builder allowing to build objects from github URL. */
   private GithubSourceStorageBuilder githubSourceStorageBuilder;
 
-  /** ProjectDtoMerger */
-  private ProjectConfigDtoMerger projectConfigDtoMerger;
-
   @Inject
   public GithubFactoryParametersResolver(
       GithubURLParser githubUrlParser,
       URLFetcher urlFetcher,
       GithubSourceStorageBuilder githubSourceStorageBuilder,
-      URLFactoryBuilder urlFactoryBuilder,
-      ProjectConfigDtoMerger projectConfigDtoMerger) {
+      URLFactoryBuilder urlFactoryBuilder) {
     super(urlFactoryBuilder, urlFetcher);
     this.githubUrlParser = githubUrlParser;
     this.githubSourceStorageBuilder = githubSourceStorageBuilder;
-    this.projectConfigDtoMerger = projectConfigDtoMerger;
   }
 
   /**
@@ -105,20 +100,7 @@ public class GithubFactoryParametersResolver extends DefaultFactoryParameterReso
                                     .withV(CURRENT_VERSION)
                                     .withSource("repo")));
 
-    if (factory.getWorkspace() != null) {
-      return projectConfigDtoMerger.merge(
-          factory,
-          () -> {
-            // Compute project configuration
-            return newDto(ProjectConfigDto.class)
-                .withSource(githubSourceStorageBuilder.buildWorkspaceConfigSource(githubUrl))
-                .withName(githubUrl.getRepository())
-                .withPath("/".concat(githubUrl.getRepository()));
-          });
-    } else if (factory.getDevfile() == null) {
-      // initialize default devfile
-      factory.setDevfile(urlFactoryBuilder.buildDefaultDevfile(githubUrl.getRepository()));
-    }
+    factory.setDevfile(urlFactoryBuilder.buildDefaultDevfile(githubUrl.getRepository()));
 
     List<ProjectDto> projects = factory.getDevfile().getProjects();
     // if no projects set, set the default one from GitHub url

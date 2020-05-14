@@ -50,11 +50,6 @@ public final class DtoConverter {
             .withId(factory.getId())
             .withName(factory.getName())
             .withV(factory.getV());
-
-    if (factory.getWorkspace() != null) {
-      factoryDto.withWorkspace(
-          org.eclipse.che.api.workspace.server.DtoConverter.asDto(factory.getWorkspace()));
-    }
     if (factory.getCreator() != null) {
       factoryDto.withCreator(asDto(factory.getCreator(), user));
     }

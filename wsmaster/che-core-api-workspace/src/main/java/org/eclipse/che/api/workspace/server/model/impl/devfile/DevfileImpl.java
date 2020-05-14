@@ -42,6 +42,10 @@ import org.eclipse.che.api.core.model.workspace.devfile.Project;
 @Table(name = "devfile")
 public class DevfileImpl implements Devfile {
 
+  public static DevfileImpl.DevfileImplBuilder builder() {
+    return new DevfileImpl.DevfileImplBuilder();
+  }
+
   @Id
   @GeneratedValue
   @Column(name = "id")
@@ -232,5 +236,66 @@ public class DevfileImpl implements Devfile {
         + ", metadata="
         + metadata
         + '}';
+  }
+
+  /**
+   * Helps to build complex {@link DevfileImpl instance}.
+   *
+   * @see DevfileImpl#builder()
+   */
+  public static class DevfileImplBuilder {
+
+    private String apiVersion;
+    private List<? extends Project> projects;
+    private List<? extends Component> components;
+    private List<? extends Command> commands;
+    private Map<String, String> attributes;
+    private Metadata metadata;
+
+    private DevfileImplBuilder() {}
+
+    public DevfileImpl build() {
+      return new DevfileImpl(apiVersion, projects, components, commands, attributes, metadata);
+    }
+
+    public DevfileImplBuilder fromDevfile(Devfile devfile) {
+      this.apiVersion = devfile.getApiVersion();
+      this.projects = devfile.getProjects();
+      this.components = devfile.getComponents();
+      this.commands = devfile.getCommands();
+      this.attributes = devfile.getAttributes();
+      this.metadata = devfile.getMetadata();
+      return this;
+    }
+
+    public DevfileImplBuilder setApiVersion(String apiVersion) {
+      this.apiVersion = apiVersion;
+      return this;
+    }
+
+    public DevfileImplBuilder setProjects(List<? extends Project> projects) {
+      this.projects = projects;
+      return this;
+    }
+
+    public DevfileImplBuilder setComponents(List<? extends Component> components) {
+      this.components = components;
+      return this;
+    }
+
+    public DevfileImplBuilder setCommands(List<? extends Command> commands) {
+      this.commands = commands;
+      return this;
+    }
+
+    public DevfileImplBuilder setAttributes(Map<String, String> attributes) {
+      this.attributes = attributes;
+      return this;
+    }
+
+    public DevfileImplBuilder setMetadata(Metadata metadata) {
+      this.metadata = metadata;
+      return this;
+    }
   }
 }

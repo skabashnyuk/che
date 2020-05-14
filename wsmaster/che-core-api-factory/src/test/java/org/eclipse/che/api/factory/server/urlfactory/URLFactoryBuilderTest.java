@@ -36,12 +36,11 @@ import org.eclipse.che.api.workspace.server.devfile.FileContentProvider;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
 import org.eclipse.che.api.workspace.server.devfile.exception.OverrideParameterException;
-import org.eclipse.che.api.workspace.server.model.impl.EnvironmentImpl;
-import org.eclipse.che.api.workspace.server.model.impl.RecipeImpl;
-import org.eclipse.che.api.workspace.server.model.impl.WorkspaceConfigImpl;
+
 import org.eclipse.che.api.workspace.server.model.impl.devfile.DevfileImpl;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.MetadataImpl;
-import org.eclipse.che.api.workspace.shared.dto.WorkspaceConfigDto;
+import org.eclipse.che.api.workspace.shared.dto.devfile.DevfileDto;
+import org.eclipse.che.api.workspace.shared.dto.devfile.MetadataDto;
 import org.eclipse.che.dto.server.DtoFactory;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
@@ -81,24 +80,21 @@ public class URLFactoryBuilderTest {
     attributes.put(WORKSPACE_TOOLING_EDITOR_ATTRIBUTE, defaultEditor);
     attributes.put(WORKSPACE_TOOLING_PLUGINS_ATTRIBUTE, defaultPlugin);
     // setup environment
-    WorkspaceConfigDto expectedWsConfig =
-        newDto(WorkspaceConfigDto.class).withAttributes(attributes).withName("foo");
+    DevfileDto expectedDevfileDto =
+        newDto(DevfileDto.class).withMetadata(newDto(MetadataDto.class).withName("foo"));
 
-    WorkspaceConfigDto actualWsConfigDto = urlFactoryBuilder.buildDefaultWorkspaceConfig("foo");
+    DevfileDto actualDevfileDto = urlFactoryBuilder.buildDefaultDevfile("foo");
 
-    assertEquals(actualWsConfigDto, expectedWsConfig);
+    assertEquals(actualDevfileDto, expectedDevfileDto);
   }
 
   /** Check that with a custom factory.json we've this factory being built */
   @Test
   public void checkWithCustomFactoryJsonFile() throws Exception {
 
-    WorkspaceConfigDto workspaceConfigDto = newDto(WorkspaceConfigDto.class);
+    DevfileDto devfileDto = newDto(DevfileDto.class);
     FactoryDto templateFactory =
-        newDto(FactoryDto.class)
-            .withV(CURRENT_VERSION)
-            .withName("florent")
-            .withWorkspace(workspaceConfigDto);
+        newDto(FactoryDto.class).withV(CURRENT_VERSION).withName("florent").withDevfile(devfileDto);
     String jsonFactory = DtoFactory.getInstance().toJson(templateFactory);
 
     String myLocation = "http://foo-location";

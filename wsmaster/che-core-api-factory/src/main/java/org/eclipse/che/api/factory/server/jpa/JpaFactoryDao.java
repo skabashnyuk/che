@@ -39,7 +39,6 @@ import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.factory.server.model.impl.FactoryImpl;
 import org.eclipse.che.api.factory.server.spi.FactoryDao;
 import org.eclipse.che.api.user.server.event.BeforeUserRemovedEvent;
-import org.eclipse.che.api.workspace.server.model.impl.ProjectConfigImpl;
 import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.core.db.cascade.CascadeEventSubscriber;
 import org.eclipse.che.core.db.jpa.DuplicateKeyException;
@@ -202,9 +201,6 @@ public class JpaFactoryDao implements FactoryDao {
   @Transactional
   protected void doCreate(FactoryImpl factory) {
     final EntityManager manager = managerProvider.get();
-    if (factory.getWorkspace() != null) {
-      factory.getWorkspace().getProjects().forEach(ProjectConfigImpl::prePersistAttributes);
-    }
     manager.persist(factory);
     manager.flush();
   }
@@ -215,9 +211,6 @@ public class JpaFactoryDao implements FactoryDao {
     if (manager.find(FactoryImpl.class, update.getId()) == null) {
       throw new NotFoundException(
           format("Could not update factory with id %s because it doesn't exist", update.getId()));
-    }
-    if (update.getWorkspace() != null) {
-      update.getWorkspace().getProjects().forEach(ProjectConfigImpl::prePersistAttributes);
     }
     FactoryImpl merged = manager.merge(update);
     manager.flush();

@@ -11,19 +11,6 @@
  */
 package org.eclipse.che.api.factory.server.urlfactory;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
-import static org.eclipse.che.api.factory.shared.Constants.CURRENT_VERSION;
-import static org.eclipse.che.api.workspace.server.devfile.Constants.CURRENT_API_VERSION;
-import static org.eclipse.che.api.workspace.shared.Constants.WORKSPACE_TOOLING_EDITOR_ATTRIBUTE;
-import static org.eclipse.che.api.workspace.shared.Constants.WORKSPACE_TOOLING_PLUGINS_ATTRIBUTE;
-import static org.eclipse.che.dto.server.DtoFactory.newDto;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.factory.shared.dto.FactoryDto;
@@ -35,10 +22,21 @@ import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
 import org.eclipse.che.api.workspace.server.devfile.exception.OverrideParameterException;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.DevfileImpl;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.MetadataImpl;
-import org.eclipse.che.api.workspace.shared.dto.WorkspaceConfigDto;
 import org.eclipse.che.api.workspace.shared.dto.devfile.DevfileDto;
 import org.eclipse.che.api.workspace.shared.dto.devfile.MetadataDto;
 import org.eclipse.che.dto.server.DtoFactory;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
+import java.util.Map;
+import java.util.Optional;
+
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static org.eclipse.che.api.factory.shared.Constants.CURRENT_VERSION;
+import static org.eclipse.che.api.workspace.server.devfile.Constants.CURRENT_API_VERSION;
+import static org.eclipse.che.dto.server.DtoFactory.newDto;
+
 
 /**
  * Handle the creation of some elements used inside a {@link FactoryDto}.
@@ -152,22 +150,6 @@ public class URLFactoryBuilder {
     DevfileImpl devfileWithProperName = new DevfileImpl(devfile);
     devfileWithProperName.setMetadata(devfileMetadata);
     return devfileWithProperName;
-  }
-
-  /**
-   * Help to generate default workspace configuration
-   *
-   * @param name the name of the workspace
-   * @return a workspace configuration
-   */
-  public WorkspaceConfigDto buildDefaultWorkspaceConfig(String name) {
-
-    Map<String, String> attributes = new HashMap<>();
-    attributes.put(WORKSPACE_TOOLING_EDITOR_ATTRIBUTE, defaultCheEditor);
-    attributes.put(WORKSPACE_TOOLING_PLUGINS_ATTRIBUTE, defaultChePlugins);
-
-    // workspace configuration using the environment
-    return newDto(WorkspaceConfigDto.class).withName(name).withAttributes(attributes);
   }
 
   /**

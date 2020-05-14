@@ -14,7 +14,6 @@ package org.eclipse.che.api.factory.server.spi.tck;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
-import static java.util.Collections.singletonMap;
 import static java.util.stream.Collectors.toList;
 import static org.testng.Assert.assertEquals;
 
@@ -23,10 +22,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 import org.eclipse.che.api.core.ConflictException;
@@ -44,15 +41,9 @@ import org.eclipse.che.api.factory.server.model.impl.OnAppLoadedImpl;
 import org.eclipse.che.api.factory.server.model.impl.OnProjectsLoadedImpl;
 import org.eclipse.che.api.factory.server.model.impl.PoliciesImpl;
 import org.eclipse.che.api.factory.server.spi.FactoryDao;
+import org.eclipse.che.api.factory.shared.Constants;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
-import org.eclipse.che.api.workspace.server.model.impl.CommandImpl;
-import org.eclipse.che.api.workspace.server.model.impl.EnvironmentImpl;
-import org.eclipse.che.api.workspace.server.model.impl.MachineConfigImpl;
-import org.eclipse.che.api.workspace.server.model.impl.ProjectConfigImpl;
-import org.eclipse.che.api.workspace.server.model.impl.RecipeImpl;
-import org.eclipse.che.api.workspace.server.model.impl.ServerConfigImpl;
-import org.eclipse.che.api.workspace.server.model.impl.SourceStorageImpl;
-import org.eclipse.che.api.workspace.server.model.impl.WorkspaceConfigImpl;
+import org.eclipse.che.api.workspace.server.model.impl.devfile.DevfileImpl;
 import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.commons.test.tck.TckListener;
 import org.eclipse.che.commons.test.tck.repository.TckRepository;
@@ -292,122 +283,129 @@ public class FactoryDaoTest {
     final FactoryImpl factory =
         FactoryImpl.builder()
             .generateId()
-            .setVersion("4_0")
+            .setVersion(Constants.CURRENT_VERSION)
             .setName("factoryName" + index)
             .setButton(factoryButton)
             .setCreator(creator)
             .setPolicies(policies)
             .setIde(ide)
             .build();
-    factory.setWorkspace(createWorkspaceConfig(index));
+    factory.setDevfile(createDevfile(index));
     return factory;
   }
 
-  private static WorkspaceConfigImpl createWorkspaceConfig(int index) {
-    // Project Sources configuration
-    final SourceStorageImpl source1 = new SourceStorageImpl();
-    source1.setType("type1");
-    source1.setLocation("location1");
-    source1.setParameters(new HashMap<>(ImmutableMap.of("param1", "value1")));
-    final SourceStorageImpl source2 = new SourceStorageImpl();
-    source2.setType("type2");
-    source2.setLocation("location2");
-    source2.setParameters(new HashMap<>(ImmutableMap.of("param4", "value1")));
-
-    // Project Configuration
-    final ProjectConfigImpl pCfg1 = new ProjectConfigImpl();
-    pCfg1.setPath("/path1");
-    pCfg1.setType("type1");
-    pCfg1.setName("project1");
-    pCfg1.setDescription("description1");
-    pCfg1.getMixins().addAll(asList("mixin1", "mixin2"));
-    pCfg1.setSource(source1);
-
-    final ProjectConfigImpl pCfg2 = new ProjectConfigImpl();
-    pCfg2.setPath("/path2");
-    pCfg2.setType("type2");
-    pCfg2.setName("project2");
-    pCfg2.setDescription("description2");
-    pCfg2.getMixins().addAll(asList("mixin3", "mixin4"));
-    pCfg2.setSource(source2);
-
-    final List<ProjectConfigImpl> projects = new ArrayList<>(asList(pCfg1, pCfg2));
-
-    // Commands
-    final CommandImpl cmd1 = new CommandImpl("name1", "cmd1", "type1");
-    cmd1.getAttributes().putAll(ImmutableMap.of("key1", "value1"));
-    final CommandImpl cmd2 = new CommandImpl("name2", "cmd2", "type2");
-    cmd2.getAttributes().putAll(ImmutableMap.of("key4", "value4"));
-    final List<CommandImpl> commands = new ArrayList<>(asList(cmd1, cmd2));
-
-    // Machine configs
-    final MachineConfigImpl exMachine1 = new MachineConfigImpl();
-    final ServerConfigImpl serverConf1 =
-        new ServerConfigImpl("2265", "http", "/path1", singletonMap("key", "value"));
-    final ServerConfigImpl serverConf2 =
-        new ServerConfigImpl("2266", "ftp", "/path2", singletonMap("key", "value"));
-    exMachine1.setServers(ImmutableMap.of("ref1", serverConf1, "ref2", serverConf2));
-    exMachine1.setInstallers(ImmutableList.of("agent5", "agent4"));
-    exMachine1.setAttributes(singletonMap("att1", "val"));
-    exMachine1.setEnv(singletonMap("CHE_ENV", "value"));
-
-    final MachineConfigImpl exMachine2 = new MachineConfigImpl();
-    final ServerConfigImpl serverConf3 =
-        new ServerConfigImpl("2333", "https", "/path1", singletonMap("key", "value"));
-    final ServerConfigImpl serverConf4 =
-        new ServerConfigImpl("2334", "wss", "/path2", singletonMap("key", "value"));
-    exMachine2.setServers(ImmutableMap.of("ref1", serverConf3, "ref2", serverConf4));
-    exMachine2.setInstallers(ImmutableList.of("agent2", "agent1"));
-    exMachine2.setAttributes(singletonMap("att1", "val"));
-    exMachine2.setEnv(singletonMap("CHE_ENV2", "value"));
-
-    final MachineConfigImpl exMachine3 = new MachineConfigImpl();
-    final ServerConfigImpl serverConf5 =
-        new ServerConfigImpl("2333", "https", "/path3", singletonMap("key", "value"));
-    exMachine3.setServers(singletonMap("ref1", serverConf5));
-    exMachine3.setInstallers(ImmutableList.of("agent6", "agent2"));
-    exMachine3.setAttributes(singletonMap("att1", "val"));
-    exMachine3.setEnv(singletonMap("CHE_ENV3", "value"));
-
-    // Environments
-    final RecipeImpl recipe1 = new RecipeImpl();
-    recipe1.setLocation("https://eclipse.che/Dockerfile");
-    recipe1.setType("dockerfile");
-    recipe1.setContentType("text/x-dockerfile");
-    recipe1.setContent("content");
-    final EnvironmentImpl env1 = new EnvironmentImpl();
-    env1.setMachines(
-        new HashMap<>(
-            ImmutableMap.of(
-                "machine1", exMachine1,
-                "machine2", exMachine2,
-                "machine3", exMachine3)));
-    env1.setRecipe(recipe1);
-
-    final RecipeImpl recipe2 = new RecipeImpl();
-    recipe2.setLocation("https://eclipse.che/Dockerfile");
-    recipe2.setType("dockerfile");
-    recipe2.setContentType("text/x-dockerfile");
-    recipe2.setContent("content");
-    final EnvironmentImpl env2 = new EnvironmentImpl();
-    env2.setMachines(
-        new HashMap<>(
-            ImmutableMap.of(
-                "machine1", exMachine1,
-                "machine3", exMachine3)));
-    env2.setRecipe(recipe2);
-
-    final Map<String, EnvironmentImpl> environments = ImmutableMap.of("env1", env1, "env2", env2);
-
-    // Workspace configuration
-    final WorkspaceConfigImpl wCfg = new WorkspaceConfigImpl();
-    wCfg.setDefaultEnv("env1");
-    wCfg.setName("cfgName_" + index);
-    wCfg.setDescription("description");
-    wCfg.setCommands(commands);
-    wCfg.setProjects(projects);
-    wCfg.setEnvironments(environments);
-
-    return wCfg;
+  private static DevfileImpl createDevfile(int index) {
+    DevfileImpl devfile = new DevfileImpl();
+    devfile.setName("cfgName_" + index);
+    return devfile;
   }
+
+  //  private static WorkspaceConfigImpl createWorkspaceConfig(int index) {
+  //    // Project Sources configuration
+  //    final SourceStorageImpl source1 = new SourceStorageImpl();
+  //    source1.setType("type1");
+  //    source1.setLocation("location1");
+  //    source1.setParameters(new HashMap<>(ImmutableMap.of("param1", "value1")));
+  //    final SourceStorageImpl source2 = new SourceStorageImpl();
+  //    source2.setType("type2");
+  //    source2.setLocation("location2");
+  //    source2.setParameters(new HashMap<>(ImmutableMap.of("param4", "value1")));
+  //
+  //    // Project Configuration
+  //    final ProjectConfigImpl pCfg1 = new ProjectConfigImpl();
+  //    pCfg1.setPath("/path1");
+  //    pCfg1.setType("type1");
+  //    pCfg1.setName("project1");
+  //    pCfg1.setDescription("description1");
+  //    pCfg1.getMixins().addAll(asList("mixin1", "mixin2"));
+  //    pCfg1.setSource(source1);
+  //
+  //    final ProjectConfigImpl pCfg2 = new ProjectConfigImpl();
+  //    pCfg2.setPath("/path2");
+  //    pCfg2.setType("type2");
+  //    pCfg2.setName("project2");
+  //    pCfg2.setDescription("description2");
+  //    pCfg2.getMixins().addAll(asList("mixin3", "mixin4"));
+  //    pCfg2.setSource(source2);
+  //
+  //    final List<ProjectConfigImpl> projects = new ArrayList<>(asList(pCfg1, pCfg2));
+  //
+  //    // Commands
+  //    final CommandImpl cmd1 = new CommandImpl("name1", "cmd1", "type1");
+  //    cmd1.getAttributes().putAll(ImmutableMap.of("key1", "value1"));
+  //    final CommandImpl cmd2 = new CommandImpl("name2", "cmd2", "type2");
+  //    cmd2.getAttributes().putAll(ImmutableMap.of("key4", "value4"));
+  //    final List<CommandImpl> commands = new ArrayList<>(asList(cmd1, cmd2));
+  //
+  //    // Machine configs
+  //    final MachineConfigImpl exMachine1 = new MachineConfigImpl();
+  //    final ServerConfigImpl serverConf1 =
+  //        new ServerConfigImpl("2265", "http", "/path1", singletonMap("key", "value"));
+  //    final ServerConfigImpl serverConf2 =
+  //        new ServerConfigImpl("2266", "ftp", "/path2", singletonMap("key", "value"));
+  //    exMachine1.setServers(ImmutableMap.of("ref1", serverConf1, "ref2", serverConf2));
+  //    exMachine1.setInstallers(ImmutableList.of("agent5", "agent4"));
+  //    exMachine1.setAttributes(singletonMap("att1", "val"));
+  //    exMachine1.setEnv(singletonMap("CHE_ENV", "value"));
+  //
+  //    final MachineConfigImpl exMachine2 = new MachineConfigImpl();
+  //    final ServerConfigImpl serverConf3 =
+  //        new ServerConfigImpl("2333", "https", "/path1", singletonMap("key", "value"));
+  //    final ServerConfigImpl serverConf4 =
+  //        new ServerConfigImpl("2334", "wss", "/path2", singletonMap("key", "value"));
+  //    exMachine2.setServers(ImmutableMap.of("ref1", serverConf3, "ref2", serverConf4));
+  //    exMachine2.setInstallers(ImmutableList.of("agent2", "agent1"));
+  //    exMachine2.setAttributes(singletonMap("att1", "val"));
+  //    exMachine2.setEnv(singletonMap("CHE_ENV2", "value"));
+  //
+  //    final MachineConfigImpl exMachine3 = new MachineConfigImpl();
+  //    final ServerConfigImpl serverConf5 =
+  //        new ServerConfigImpl("2333", "https", "/path3", singletonMap("key", "value"));
+  //    exMachine3.setServers(singletonMap("ref1", serverConf5));
+  //    exMachine3.setInstallers(ImmutableList.of("agent6", "agent2"));
+  //    exMachine3.setAttributes(singletonMap("att1", "val"));
+  //    exMachine3.setEnv(singletonMap("CHE_ENV3", "value"));
+  //
+  //    // Environments
+  //    final RecipeImpl recipe1 = new RecipeImpl();
+  //    recipe1.setLocation("https://eclipse.che/Dockerfile");
+  //    recipe1.setType("dockerfile");
+  //    recipe1.setContentType("text/x-dockerfile");
+  //    recipe1.setContent("content");
+  //    final EnvironmentImpl env1 = new EnvironmentImpl();
+  //    env1.setMachines(
+  //        new HashMap<>(
+  //            ImmutableMap.of(
+  //                "machine1", exMachine1,
+  //                "machine2", exMachine2,
+  //                "machine3", exMachine3)));
+  //    env1.setRecipe(recipe1);
+  //
+  //    final RecipeImpl recipe2 = new RecipeImpl();
+  //    recipe2.setLocation("https://eclipse.che/Dockerfile");
+  //    recipe2.setType("dockerfile");
+  //    recipe2.setContentType("text/x-dockerfile");
+  //    recipe2.setContent("content");
+  //    final EnvironmentImpl env2 = new EnvironmentImpl();
+  //    env2.setMachines(
+  //        new HashMap<>(
+  //            ImmutableMap.of(
+  //                "machine1", exMachine1,
+  //                "machine3", exMachine3)));
+  //    env2.setRecipe(recipe2);
+  //
+  //    final Map<String, EnvironmentImpl> environments = ImmutableMap.of("env1", env1, "env2",
+  // env2);
+  //
+  //    // Workspace configuration
+  //    final WorkspaceConfigImpl wCfg = new WorkspaceConfigImpl();
+  //    wCfg.setDefaultEnv("env1");
+  //    wCfg.setName("cfgName_" + index);
+  //    wCfg.setDescription("description");
+  //    wCfg.setCommands(commands);
+  //    wCfg.setProjects(projects);
+  //    wCfg.setEnvironments(environments);
+  //
+  //    return wCfg;
+  //  }
 }
