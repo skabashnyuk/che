@@ -25,7 +25,6 @@ import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_NAME;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_PASSWORD;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
@@ -59,8 +58,6 @@ import org.eclipse.che.api.core.model.workspace.devfile.Project;
 import org.eclipse.che.api.core.rest.ApiExceptionMapper;
 import org.eclipse.che.api.core.rest.shared.dto.ServiceError;
 import org.eclipse.che.api.factory.server.FactoryService.FactoryParametersResolverHolder;
-import org.eclipse.che.api.factory.server.builder.FactoryBuilder;
-import org.eclipse.che.api.factory.server.impl.SourceStorageParametersValidator;
 import org.eclipse.che.api.factory.server.model.impl.AuthorImpl;
 import org.eclipse.che.api.factory.server.model.impl.FactoryImpl;
 import org.eclipse.che.api.factory.shared.Constants;
@@ -120,8 +117,6 @@ public class FactoryServiceTest {
 
   @InjectMocks private FactoryParametersResolverHolder factoryParametersResolverHolder;
 
-  private FactoryBuilder factoryBuilderSpy;
-
   private User user;
 
   private FactoryService service;
@@ -134,9 +129,6 @@ public class FactoryServiceTest {
 
   @BeforeMethod
   public void setUp() throws Exception {
-    factoryBuilderSpy = spy(new FactoryBuilder(new SourceStorageParametersValidator()));
-    lenient().doNothing().when(factoryBuilderSpy).checkValid(any(FactoryDto.class));
-    lenient().doNothing().when(factoryBuilderSpy).checkValid(any(FactoryDto.class), anyBoolean());
     user = new UserImpl(USER_ID, USER_EMAIL, ADMIN_USER_NAME);
     lenient().when(userManager.getById(anyString())).thenReturn(user);
     lenient()
@@ -150,7 +142,6 @@ public class FactoryServiceTest {
             createValidator,
             acceptValidator,
             editValidator,
-            factoryBuilderSpy,
             workspaceManager,
             factoryParametersResolverHolder);
   }
@@ -526,7 +517,6 @@ public class FactoryServiceTest {
             createValidator,
             acceptValidator,
             editValidator,
-            factoryBuilderSpy,
             workspaceManager,
             dummyHolder);
 

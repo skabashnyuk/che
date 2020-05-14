@@ -53,7 +53,6 @@ import org.eclipse.che.api.core.model.factory.Factory;
 import org.eclipse.che.api.core.model.user.User;
 import org.eclipse.che.api.core.model.workspace.config.ProjectConfig;
 import org.eclipse.che.api.core.rest.Service;
-import org.eclipse.che.api.factory.server.builder.FactoryBuilder;
 import org.eclipse.che.api.factory.shared.Constants;
 import org.eclipse.che.api.factory.shared.dto.AuthorDto;
 import org.eclipse.che.api.factory.shared.dto.FactoryDto;
@@ -90,7 +89,6 @@ public class FactoryService extends Service {
   private final FactoryEditValidator editValidator;
   private final FactoryCreateValidator createValidator;
   private final FactoryAcceptValidator acceptValidator;
-  private final FactoryBuilder factoryBuilder;
   private final WorkspaceManager workspaceManager;
   private final FactoryParametersResolverHolder factoryParametersResolverHolder;
 
@@ -102,7 +100,6 @@ public class FactoryService extends Service {
       FactoryCreateValidator createValidator,
       FactoryAcceptValidator acceptValidator,
       FactoryEditValidator editValidator,
-      FactoryBuilder factoryBuilder,
       WorkspaceManager workspaceManager,
       FactoryParametersResolverHolder factoryParametersResolverHolder) {
     this.factoryManager = factoryManager;
@@ -111,7 +108,6 @@ public class FactoryService extends Service {
     this.preferenceManager = preferenceManager;
     this.acceptValidator = acceptValidator;
     this.editValidator = editValidator;
-    this.factoryBuilder = factoryBuilder;
     this.workspaceManager = workspaceManager;
     this.factoryParametersResolverHolder = factoryParametersResolverHolder;
   }
@@ -131,7 +127,6 @@ public class FactoryService extends Service {
       throws BadRequestException, ServerException, ForbiddenException, ConflictException,
           NotFoundException {
     requiredNotNull(factory, "Factory configuration");
-    factoryBuilder.checkValid(factory);
     processDefaults(factory);
     createValidator.validateOnCreate(factory);
     return injectLinks(asDto(factoryManager.saveFactory(factory)));
@@ -253,7 +248,6 @@ public class FactoryService extends Service {
     final Factory existing = factoryManager.getById(factoryId);
     // check if the current user has enough access to edit the factory
     editValidator.validate(existing);
-    factoryBuilder.checkValid(update, true);
     // validate the new content
     createValidator.validateOnCreate(update);
     return injectLinks(asDto(factoryManager.updateFactory(update)));

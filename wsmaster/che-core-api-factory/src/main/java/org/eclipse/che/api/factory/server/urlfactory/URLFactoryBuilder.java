@@ -11,6 +11,16 @@
  */
 package org.eclipse.che.api.factory.server.urlfactory;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static org.eclipse.che.api.factory.shared.Constants.CURRENT_VERSION;
+import static org.eclipse.che.api.workspace.server.devfile.Constants.CURRENT_API_VERSION;
+import static org.eclipse.che.dto.server.DtoFactory.newDto;
+
+import java.util.Map;
+import java.util.Optional;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.factory.shared.dto.FactoryDto;
@@ -25,18 +35,6 @@ import org.eclipse.che.api.workspace.server.model.impl.devfile.MetadataImpl;
 import org.eclipse.che.api.workspace.shared.dto.devfile.DevfileDto;
 import org.eclipse.che.api.workspace.shared.dto.devfile.MetadataDto;
 import org.eclipse.che.dto.server.DtoFactory;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
-import java.util.Map;
-import java.util.Optional;
-
-import static com.google.common.base.Strings.isNullOrEmpty;
-import static org.eclipse.che.api.factory.shared.Constants.CURRENT_VERSION;
-import static org.eclipse.che.api.workspace.server.devfile.Constants.CURRENT_API_VERSION;
-import static org.eclipse.che.dto.server.DtoFactory.newDto;
-
 
 /**
  * Handle the creation of some elements used inside a {@link FactoryDto}.

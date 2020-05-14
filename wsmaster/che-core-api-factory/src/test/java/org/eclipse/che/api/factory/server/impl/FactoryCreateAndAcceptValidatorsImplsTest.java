@@ -11,6 +11,12 @@
  */
 package org.eclipse.che.api.factory.server.impl;
 
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.factory.shared.dto.FactoryDto;
 import org.eclipse.che.api.user.server.spi.PreferenceDao;
@@ -20,12 +26,6 @@ import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
-
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 /**
  * Tests for {@link org.eclipse.che.api.factory.server.impl.FactoryAcceptValidatorImpl} and {@link
@@ -40,7 +40,7 @@ public class FactoryCreateAndAcceptValidatorsImplsTest {
 
   @Mock private FactoryDto factory;
 
-  //@Mock private WorkspaceValidator workspaceConfigValidator;
+  // @Mock private WorkspaceValidator workspaceConfigValidator;
 
   private FactoryAcceptValidatorImpl acceptValidator;
 

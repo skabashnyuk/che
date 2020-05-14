@@ -33,7 +33,6 @@ import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.factory.server.FactoryConstants;
-import org.eclipse.che.api.factory.server.builder.FactoryBuilder;
 import org.eclipse.che.api.factory.shared.dto.AuthorDto;
 import org.eclipse.che.api.factory.shared.dto.FactoryDto;
 import org.eclipse.che.api.factory.shared.dto.IdeActionDto;
@@ -65,8 +64,6 @@ public class FactoryBaseValidatorTest {
   @Mock private UserDao userDao;
 
   @Mock private PreferenceDao preferenceDao;
-
-  @Mock private FactoryBuilder builder;
 
   @Mock private HttpServletRequest request;
 
