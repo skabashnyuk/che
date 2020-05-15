@@ -71,7 +71,7 @@ public class TestFactory {
     seleniumWebDriver.quit();
 
     workspaceServiceClient.deleteFactoryWorkspaces(
-        factoryDto.getWorkspace().getName(), owner.getName());
+        factoryDto.getName(), owner.getName());
     deleteFactory();
   }
 
@@ -87,7 +87,7 @@ public class TestFactory {
 
   public WorkspaceStatus getWorkspaceStatusAssociatedWithFactory() throws Exception {
     return workspaceServiceClient
-        .getByName(factoryDto.getWorkspace().getName(), owner.getName())
+        .getByName(factoryDto.getName(), owner.getName())
         .getStatus();
   }
 }

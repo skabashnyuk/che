@@ -23,7 +23,7 @@ public class FactoryCreateValidatorImpl extends FactoryBaseValidator
 
   @Override
   public void validateOnCreate(FactoryDto factory) throws BadRequestException {
-    validateProjects(factory);
+    // validateProjects(factory);
     validateCurrentTimeAfterSinceUntil(factory);
     validateProjectActions(factory);
   }

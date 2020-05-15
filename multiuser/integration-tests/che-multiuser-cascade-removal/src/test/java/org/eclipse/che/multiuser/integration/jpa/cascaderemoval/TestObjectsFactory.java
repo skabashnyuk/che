@@ -12,6 +12,8 @@
 package org.eclipse.che.multiuser.integration.jpa.cascaderemoval;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
+import static java.util.Collections.singletonMap;
 
 import com.google.common.collect.ImmutableMap;
 import java.security.KeyPair;
@@ -22,6 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.eclipse.che.account.shared.model.Account;
 import org.eclipse.che.account.spi.AccountImpl;
+import org.eclipse.che.api.core.model.workspace.devfile.Metadata;
 import org.eclipse.che.api.factory.server.model.impl.AuthorImpl;
 import org.eclipse.che.api.factory.server.model.impl.FactoryImpl;
 import org.eclipse.che.api.ssh.server.model.impl.SshPairImpl;
@@ -29,6 +32,13 @@ import org.eclipse.che.api.user.server.model.impl.ProfileImpl;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceConfigImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
+import org.eclipse.che.api.workspace.server.model.impl.devfile.ActionImpl;
+import org.eclipse.che.api.workspace.server.model.impl.devfile.ComponentImpl;
+import org.eclipse.che.api.workspace.server.model.impl.devfile.DevfileImpl;
+import org.eclipse.che.api.workspace.server.model.impl.devfile.EntrypointImpl;
+import org.eclipse.che.api.workspace.server.model.impl.devfile.MetadataImpl;
+import org.eclipse.che.api.workspace.server.model.impl.devfile.ProjectImpl;
+import org.eclipse.che.api.workspace.server.model.impl.devfile.SourceImpl;
 import org.eclipse.che.multiuser.machine.authentication.server.signature.model.impl.SignatureKeyPairImpl;
 import org.eclipse.che.multiuser.permission.workspace.server.model.impl.WorkerImpl;
 import org.eclipse.che.multiuser.resource.spi.impl.FreeResourcesLimitImpl;
@@ -86,11 +96,78 @@ public final class TestObjectsFactory {
         id,
         id + "-name",
         "4.0",
-        createWorkspaceConfig(id),
+        createDevfile(id),
         new AuthorImpl(creator, System.currentTimeMillis()),
         null,
         null,
         null);
+  }
+
+  public static DevfileImpl createDevfile(String id) {
+    return new DevfileImpl(
+        "0.0.1",
+        asList(createDevfileProject(id + "-project1"), createDevfileProject(id + "-project2")),
+        asList(
+            createDevfileComponent(id + "-component1"), createDevfileComponent(id + "-component2")),
+        asList(createDevfileCommand(id + "-command1"), createDevfileCommand(id + "-command2")),
+        singletonMap("attribute1", "value1"),
+        createMetadata(id + "name"));
+  }
+
+  private static ComponentImpl createDevfileComponent(String name) {
+    return new ComponentImpl(
+        "kubernetes",
+        name,
+        "eclipse/che-theia/0.0.1",
+        ImmutableMap.of("java.home", "/home/user/jdk11"),
+        "https://mysite.com/registry/somepath",
+        "/dev.yaml",
+        "refContent",
+        ImmutableMap.of("app.kubernetes.io/component", "webapp"),
+        singletonList(createEntrypoint()),
+        "image",
+        "256G",
+        "128M",
+        "200m",
+        "100m",
+        false,
+        singletonList("command"),
+        singletonList("arg"),
+        null,
+        null,
+        null);
+  }
+
+  private static EntrypointImpl createEntrypoint() {
+    return new EntrypointImpl(
+        "parentName",
+        singletonMap("parent", "selector"),
+        "containerName",
+        asList("command1", "command2"),
+        asList("arg1", "arg2"));
+  }
+
+  private static org.eclipse.che.api.workspace.server.model.impl.devfile.CommandImpl
+      createDevfileCommand(String name) {
+    return new org.eclipse.che.api.workspace.server.model.impl.devfile.CommandImpl(
+        name, singletonList(createAction()), singletonMap("attr1", "value1"), null);
+  }
+
+  private static ActionImpl createAction() {
+    return new ActionImpl("exec", "component", "run.sh", "/home/user", null, null);
+  }
+
+  private static ProjectImpl createDevfileProject(String name) {
+    return new ProjectImpl(name, createDevfileSource(), "path");
+  }
+
+  private static SourceImpl createDevfileSource() {
+    return new SourceImpl(
+        "type", "http://location", "branch1", "point1", "tag1", "commit1", "sparseCheckoutDir1");
+  }
+
+  public static Metadata createMetadata(String name) {
+    return new MetadataImpl(name);
   }
 
   public static WorkerImpl createWorker(String userId, String workspaceId) {

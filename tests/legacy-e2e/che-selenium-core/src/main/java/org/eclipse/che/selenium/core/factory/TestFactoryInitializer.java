@@ -84,7 +84,7 @@ public class TestFactoryInitializer {
         DtoFactory.getInstance()
             .createDtoFromJson(factoryTemplate, FactoryDto.class)
             .withName(name);
-    factoryDto.getWorkspace().setName(name);
+    factoryDto.setName(name);
     return new TestFactoryBuilder(factoryDto);
   }
 
@@ -193,21 +193,6 @@ public class TestFactoryInitializer {
     @Override
     public FactoryDto withDevfile(DevfileDto devfileDto) {
       return factoryDto.withDevfile(devfileDto);
-    }
-
-    @Override
-    public WorkspaceConfigDto getWorkspace() {
-      return factoryDto.getWorkspace();
-    }
-
-    @Override
-    public void setWorkspace(WorkspaceConfigDto workspace) {
-      factoryDto.setWorkspace(workspace);
-    }
-
-    @Override
-    public FactoryDto withWorkspace(WorkspaceConfigDto workspace) {
-      return factoryDto.withWorkspace(workspace);
     }
 
     @Override

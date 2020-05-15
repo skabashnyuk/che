@@ -25,18 +25,15 @@ import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 import java.util.Optional;
-import org.eclipse.che.api.factory.server.urlfactory.ProjectConfigDtoMerger;
 import org.eclipse.che.api.factory.server.urlfactory.RemoteFactoryUrl;
 import org.eclipse.che.api.factory.server.urlfactory.URLFactoryBuilder;
 import org.eclipse.che.api.factory.shared.dto.FactoryDto;
 import org.eclipse.che.api.workspace.server.devfile.FileContentProvider;
-import org.eclipse.che.api.workspace.shared.dto.WorkspaceConfigDto;
 import org.eclipse.che.api.workspace.shared.dto.devfile.DevfileDto;
 import org.eclipse.che.api.workspace.shared.dto.devfile.MetadataDto;
 import org.eclipse.che.api.workspace.shared.dto.devfile.ProjectDto;
@@ -64,9 +61,6 @@ public class GithubFactoryParametersResolverTest {
   /** Converter allowing to convert github URL to other objects. */
   @Spy
   private GithubSourceStorageBuilder githubSourceStorageBuilder = new GithubSourceStorageBuilder();
-
-  /** ProjectDtoMerger */
-  @Mock private ProjectConfigDtoMerger projectConfigDtoMerger = new ProjectConfigDtoMerger();
 
   /** Parser which will allow to check validity of URLs and create objects. */
   @Mock private URLFactoryBuilder urlFactoryBuilder;
@@ -148,7 +142,6 @@ public class GithubFactoryParametersResolverTest {
     FactoryDto factory = githubFactoryParametersResolver.createFactory(params);
     // then
     assertNotNull(factory.getDevfile());
-    assertNull(factory.getWorkspace());
 
     // check we called the builder with the following devfile file
     verify(urlFactoryBuilder)
@@ -212,7 +205,7 @@ public class GithubFactoryParametersResolverTest {
 
     String githubUrl = "https://github.com/eclipse/che";
 
-    FactoryDto computedFactory = generateWsConfigFactory();
+    FactoryDto computedFactory = generateDevfileFactory();
 
     when(urlFactoryBuilder.createFactoryFromJson(any(RemoteFactoryUrl.class)))
         .thenReturn(Optional.of(computedFactory));
@@ -239,12 +232,5 @@ public class GithubFactoryParametersResolverTest {
             newDto(DevfileDto.class)
                 .withApiVersion(CURRENT_API_VERSION)
                 .withMetadata(newDto(MetadataDto.class).withName("che")));
-  }
-
-  private FactoryDto generateWsConfigFactory() {
-    return newDto(FactoryDto.class)
-        .withV(CURRENT_VERSION)
-        .withSource("repo")
-        .withWorkspace(newDto(WorkspaceConfigDto.class).withName("che"));
   }
 }

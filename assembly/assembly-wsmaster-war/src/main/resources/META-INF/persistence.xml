@@ -50,7 +50,7 @@
         <class>org.eclipse.che.api.workspace.server.model.impl.devfile.ProjectImpl</class>
         <class>org.eclipse.che.api.workspace.server.model.impl.devfile.ComponentImpl</class>
         <class>org.eclipse.che.api.workspace.server.model.impl.devfile.EntrypointImpl</class>
-        <class>org.eclipFactoryCreateAndAcceptValidatorsImplsTestse.che.api.workspace.server.model.impl.devfile.ActionImpl</class>
+        <class>org.eclipse.che.api.workspace.server.model.impl.devfile.ActionImpl</class>
         <class>org.eclipse.che.api.workspace.server.model.impl.devfile.VolumeImpl</class>
         <class>org.eclipse.che.api.workspace.server.model.impl.devfile.SourceImpl</class>
         <class>org.eclipse.che.api.workspace.server.model.impl.devfile.EnvImpl</class>
