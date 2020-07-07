@@ -145,7 +145,7 @@ public class JpaWorkerDao extends AbstractJpaPermissionsDao<WorkerImpl> implemen
     return managerProvider
         .get()
         .createNamedQuery("Worker.getByUserAndWorkspaceId", WorkerImpl.class)
-        .setParameter("workspaceId", instanceId)
+        .setParameter("userDevfileId", instanceId)
         .setParameter("userId", userId)
         .getSingleResult();
   }

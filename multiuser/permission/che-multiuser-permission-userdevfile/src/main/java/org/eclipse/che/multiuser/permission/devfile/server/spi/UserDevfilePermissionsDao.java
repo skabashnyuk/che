@@ -1,0 +1,74 @@
+package org.eclipse.che.multiuser.permission.devfile.server.spi;
+
+import org.eclipse.che.api.core.NotFoundException;
+import org.eclipse.che.api.core.Page;
+import org.eclipse.che.api.core.ServerException;
+import org.eclipse.che.multiuser.permission.devfile.server.model.impl.UserDevfilePermissionsImpl;
+
+import java.util.List;
+import java.util.Optional;
+
+/** Defines data access object contract for {@link UserDevfilePermissionsImpl}. */
+public interface UserDevfilePermissionsDao {
+
+  /**
+   * Stores (adds or updates) UserDevfilePermissions.
+   *
+   * @param userDevfilePermissions userDevfilePermissions to store
+   * @return optional with updated userDevfilePermissions, other way empty optional must be returned
+   * @throws NullPointerException when {@code userDevfilePermissions} is null
+   * @throws ServerException when any other error occurs during userDevfilePermissions storing
+   */
+  Optional<UserDevfilePermissionsImpl> store(UserDevfilePermissionsImpl userDevfilePermissions)
+      throws ServerException;
+
+  /**
+   * Gets userDevfilePermissions by user and userDevfileId
+   *
+   * @param userDevfileId user devfile identifier
+   * @param userId user identifier
+   * @return userDevfilePermissions instance, never null
+   * @throws NullPointerException when {@code workspace} or {@code user} is null
+   * @throws NotFoundException when worker with given {@code workspace} and {@code user} was not
+   *     found
+   * @throws ServerException when any other error occurs during worker fetching
+   */
+  UserDevfilePermissionsImpl getUserDevfilePermissions(String userDevfileId, String userId)
+      throws ServerException, NotFoundException;
+
+  /**
+   * Removes userDevfilePermissions
+   *
+   * <p>Doesn't throw an exception when userDevfilePermissions with given {@code UserDevfile} and
+   * {@code user} does not exist
+   *
+   * @param userDevfileId workspace identifier
+   * @param userId user identifier
+   * @throws NullPointerException when {@code UserDevfile} or {@code user} is null
+   * @throws ServerException when any other error occurs during userDevfilePermissions removing
+   */
+  void removeUserDevfilePermissions(String userDevfileId, String userId) throws ServerException;
+
+  /**
+   * Gets userDevfilePermissions by user devfile
+   *
+   * @param userDevfileId user devfile identifier
+   * @param maxItems the maximum number of userDevfilePermissions to return
+   * @param skipCount the number of userDevfilePermissions to skip
+   * @return list of userDevfilePermissions instance
+   * @throws NullPointerException when {@code userDevfile} is null
+   * @throws ServerException when any other error occurs during userDevfilePermissions fetching
+   */
+  Page<UserDevfilePermissionsImpl> getUserDevfilePermissions(String userDevfileId, int maxItems, long skipCount)
+      throws ServerException;
+
+  /**
+   * Gets UserDevfilePermissions by user
+   *
+   * @param userId user identifier
+   * @return list of UserDevfilePermissions instance
+   * @throws NullPointerException when {@code user} is null
+   * @throws ServerException when any other error occurs during UserDevfilePermissions fetching
+   */
+  List<UserDevfilePermissionsImpl> getUserDevfilePermissionsByUser(String userId) throws ServerException;
+}

@@ -11,31 +11,15 @@
  */
 package org.eclipse.che.api.devfile.server.jpa;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static java.lang.String.format;
-import static java.util.Collections.emptyList;
-import static java.util.Objects.requireNonNull;
-import static java.util.stream.Collectors.toList;
-import static org.eclipse.che.api.devfile.server.jpa.JpaUserDevfileDao.UserDevfileSearchQueryBuilder.newBuilder;
-
 import com.google.common.annotations.Beta;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.persist.Transactional;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.StringJoiner;
-import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
-import javax.persistence.EntityManager;
-import javax.persistence.TypedQuery;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.Page;
 import org.eclipse.che.api.core.ServerException;
+import org.eclipse.che.api.core.notification.EventService;
+import org.eclipse.che.api.devfile.server.event.BeforeDevfileRemovedEvent;
 import org.eclipse.che.api.devfile.server.model.impl.UserDevfileImpl;
 import org.eclipse.che.api.devfile.server.spi.UserDevfileDao;
 import org.eclipse.che.commons.lang.Pair;
@@ -44,12 +28,33 @@ import org.eclipse.che.core.db.jpa.IntegrityConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
+import javax.persistence.EntityManager;
+import javax.persistence.TypedQuery;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.StringJoiner;
+import java.util.stream.Collectors;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static java.lang.String.format;
+import static java.util.Collections.emptyList;
+import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.toList;
+import static org.eclipse.che.api.devfile.server.jpa.JpaUserDevfileDao.UserDevfileSearchQueryBuilder.newBuilder;
+
 @Singleton
 @Beta
 public class JpaUserDevfileDao implements UserDevfileDao {
   private static final Logger LOG = LoggerFactory.getLogger(JpaUserDevfileDao.class);
 
   @Inject private Provider<EntityManager> managerProvider;
+  @Inject private EventService eventService;
+
   public static final List<Pair<String, String>> DEFAULT_ORDER =
       ImmutableList.of(new Pair<>("id", "ASC"));
 
@@ -127,8 +132,7 @@ public class JpaUserDevfileDao implements UserDevfileDao {
 
     if (filter != null && !filter.isEmpty()) {
       List<Pair<String, String>> invalidFilter =
-          filter
-              .stream()
+          filter.stream()
               .filter(p -> !p.first.equalsIgnoreCase("devfile.metadata.name"))
               .collect(toList());
       if (!invalidFilter.isEmpty()) {
@@ -139,8 +143,7 @@ public class JpaUserDevfileDao implements UserDevfileDao {
     List<Pair<String, String>> effectiveOrder = DEFAULT_ORDER;
     if (order != null && !order.isEmpty()) {
       List<Pair<String, String>> invalidSortOrder =
-          order
-              .stream()
+          order.stream()
               .filter(p -> !p.second.equalsIgnoreCase("asc"))
               .filter(p -> !p.second.equalsIgnoreCase("desc"))
               .collect(Collectors.toList());
@@ -195,11 +198,14 @@ public class JpaUserDevfileDao implements UserDevfileDao {
     return merged;
   }
 
-  @Transactional
-  protected void doRemove(String id) {
+  @Transactional(rollbackOn = {RuntimeException.class, ServerException.class})
+  protected void doRemove(String id) throws ServerException {
     final EntityManager manager = managerProvider.get();
     final UserDevfileImpl devfile = manager.find(UserDevfileImpl.class, id);
     if (devfile != null) {
+      eventService
+          .publish(new BeforeDevfileRemovedEvent(new UserDevfileImpl(devfile)))
+          .propagateException();
       manager.remove(devfile);
       manager.flush();
     }
