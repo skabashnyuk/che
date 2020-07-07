@@ -61,7 +61,7 @@ public class UserDevfilePermissionsDaoTest {
 
   @Inject private TckRepository<WorkspaceImpl> workspaceRepository;
 
-  UserDevfilePermissions[] permissions;
+  UserDevfilePermissionsImpl[] permissions;
 
   @BeforeMethod
   public void setUp() throws TckRepositoryException {
@@ -123,7 +123,7 @@ public class UserDevfilePermissionsDaoTest {
   public void shouldReplaceExistingWorkerOnStoring() throws Exception {
     UserDevfilePermissionsImpl replace = new UserDevfilePermissionsImpl("ws1", "user1", Collections.singletonList("read"));
     workerDao.store(replace);
-    Assert.assertEquals(workerDao.getWorker("ws1", "user1"), replace);
+    Assert.assertEquals(workerDao.getUserDevfilePermissions("ws1", "user1"), replace);
   }
 
   @Test(expectedExceptions = NullPointerException.class)
@@ -134,34 +134,34 @@ public class UserDevfilePermissionsDaoTest {
   /* WorkerDao.getWorker() tests */
   @Test
   public void shouldGetWorkerByWorkspaceIdAndUserId() throws Exception {
-    Assert.assertEquals(workerDao.getWorker("ws1", "user1"), permissions[0]);
-    Assert.assertEquals(workerDao.getWorker("ws2", "user2"), permissions[3]);
+    Assert.assertEquals(workerDao.getUserDevfilePermissions("ws1", "user1"), permissions[0]);
+    Assert.assertEquals(workerDao.getUserDevfilePermissions("ws2", "user2"), permissions[3]);
   }
 
   @Test(expectedExceptions = NullPointerException.class)
   public void shouldThrowExceptionWhenGetWorkerWorkspaceIdArgumentIsNull() throws Exception {
-    workerDao.getWorker(null, "user1");
+    workerDao.getUserDevfilePermissions(null, "user1");
   }
 
   @Test(expectedExceptions = NullPointerException.class)
   public void shouldThrowExceptionWhenGetWorkerUserIdArgumentIsNull() throws Exception {
-    workerDao.getWorker("ws1", null);
+    workerDao.getUserDevfilePermissions("ws1", null);
   }
 
   @Test(expectedExceptions = NotFoundException.class)
   public void shouldThrowNotFoundExceptionOnGetIfWorkerWithSuchWorkspaceIdOrUserIdDoesNotExist()
       throws Exception {
-    workerDao.getWorker("ws9", "user1");
+    workerDao.getUserDevfilePermissions("ws9", "user1");
   }
 
   /* WorkerDao.getWorkers() tests */
   @Test
   public void shouldGetWorkersByWorkspaceId() throws Exception {
-    Page<UserDevfilePermissionsImpl> permissionsPage = workerDao.getWorkers("ws2", 1, 1);
+    Page<UserDevfilePermissionsImpl> permissionsPage = workerDao.getUserDevfilePermissions("ws2", 1, 1);
 
     final List<UserDevfilePermissionsImpl> fetchedWorkers = permissionsPage.getItems();
-    assertEquals(workersPage.getTotalItemsCount(), 3);
-    assertEquals(workersPage.getItemsCount(), 1);
+    assertEquals(permissionsPage.getTotalItemsCount(), 3);
+    assertEquals(permissionsPage.getItemsCount(), 1);
     assertTrue(
         fetchedWorkers.contains(permissions[2])
             ^ fetchedWorkers.contains(permissions[3])
@@ -170,7 +170,7 @@ public class UserDevfilePermissionsDaoTest {
 
   @Test
   public void shouldGetWorkersByUserId() throws Exception {
-    List<UserDevfilePermissionsImpl> actual = workerDao.getWorkersByUser("user1");
+    List<UserDevfilePermissionsImpl> actual = workerDao.getUserDevfilePermissionsByUser("user1");
     List<UserDevfilePermissionsImpl> expected = Arrays.asList(permissions[0], permissions[2]);
     assertEquals(actual.size(), expected.size());
     assertTrue(new HashSet<>(actual).equals(new HashSet<>(expected)));
@@ -178,52 +178,52 @@ public class UserDevfilePermissionsDaoTest {
 
   @Test(expectedExceptions = NullPointerException.class)
   public void shouldThrowExceptionWhenGetWorkersByWorkspaceArgumentIsNull() throws Exception {
-    workerDao.getWorkers(null, 1, 0);
+    workerDao.getUserDevfilePermissions(null, 1, 0);
   }
 
   @Test(expectedExceptions = NullPointerException.class)
   public void shouldThrowExceptionWhenGetWorkersByUserArgumentIsNull() throws Exception {
-    workerDao.getWorkersByUser(null);
+    workerDao.getUserDevfilePermissionsByUser(null);
   }
 
   @Test
   public void shouldReturnEmptyListIfWorkersWithSuchWorkspaceIdDoesNotFound() throws Exception {
-    assertEquals(0, workerDao.getWorkers("unexisted_ws", 1, 0).getItemsCount());
+    assertEquals(0, workerDao.getUserDevfilePermissions("unexisted_ws", 1, 0).getItemsCount());
   }
 
   @Test
   public void shouldReturnEmptyListIfWorkersWithSuchUserIdDoesNotFound() throws Exception {
-    assertEquals(0, workerDao.getWorkersByUser("unexisted_user").size());
+    assertEquals(0, workerDao.getUserDevfilePermissionsByUser("unexisted_user").size());
   }
 
   /* WorkerDao.removeWorker() tests */
   @Test
   public void shouldRemoveWorker() throws Exception {
-    workerDao.removeWorker("ws1", "user1");
-    assertEquals(1, workerDao.getWorkersByUser("user1").size());
-    assertNull(notFoundToNull(() -> workerDao.getWorker("ws1", "user1")));
+    workerDao.removeUserDevfilePermissions("ws1", "user1");
+    assertEquals(1, workerDao.getUserDevfilePermissionsByUser("user1").size());
+    assertNull(notFoundToNull(() -> workerDao.getUserDevfilePermissions("ws1", "user1")));
   }
 
   @Test(expectedExceptions = NullPointerException.class)
   public void shouldThrowExceptionWhenRemoveWorkerWorkspaceIdArgumentIsNull() throws Exception {
-    workerDao.removeWorker(null, "user1");
+    workerDao.removeUserDevfilePermissions(null, "user1");
   }
 
   @Test(expectedExceptions = NullPointerException.class)
   public void shouldThrowExceptionWhenRemoveWorkerUserIdArgumentIsNull() throws Exception {
-    workerDao.removeWorker("ws1", null);
+    workerDao.removeUserDevfilePermissions("ws1", null);
   }
 
   @Test(expectedExceptions = ServerException.class)
   public void shouldThrowNotFoundExceptionOnRemoveIfWorkerWithSuchWorkspaceIdDoesNotExist()
       throws Exception {
-    workerDao.removeWorker("unexisted_ws", "user1");
+    workerDao.removeUserDevfilePermissions("unexisted_ws", "user1");
   }
 
   @Test(expectedExceptions = ServerException.class)
   public void shouldThrowNotFoundExceptionOnRemoveIfWorkerWithSuchUserIdDoesNotExist()
       throws Exception {
-    workerDao.removeWorker("ws1", "unexisted_user");
+    workerDao.removeUserDevfilePermissions("ws1", "unexisted_user");
   }
 
   public static class TestDomain extends AbstractPermissionsDomain<UserDevfilePermissionsImpl> {

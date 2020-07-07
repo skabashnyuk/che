@@ -91,4 +91,12 @@ public interface UserDevfileDao {
       List<Pair<String, String>> filter,
       List<Pair<String, String>> order)
       throws ServerException;
+
+  /**
+   * Get the count of all user devfiles from the persistent layer.
+   *
+   * @return workspace count
+   * @throws ServerException when any error occurs
+   */
+  long getTotalCount() throws ServerException;
 }

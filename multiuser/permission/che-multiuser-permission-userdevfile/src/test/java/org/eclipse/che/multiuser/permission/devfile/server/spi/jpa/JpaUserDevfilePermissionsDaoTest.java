@@ -9,18 +9,11 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.multiuser.permission.workspace.server.spi.jpa;
-
-import static org.eclipse.che.inject.Matchers.names;
-import static org.eclipse.che.multiuser.api.permission.server.AbstractPermissionsDomain.SET_PERMISSIONS;
+package org.eclipse.che.multiuser.permission.devfile.server.spi.jpa;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.matcher.Matchers;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import javax.persistence.EntityManager;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.eclipse.che.account.shared.model.Account;
 import org.eclipse.che.account.spi.AccountImpl;
@@ -29,14 +22,22 @@ import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import org.eclipse.che.commons.test.tck.TckModule;
 import org.eclipse.che.commons.test.tck.TckResourcesCleaner;
-import org.eclipse.che.multiuser.permission.workspace.server.model.impl.WorkerImpl;
+import org.eclipse.che.multiuser.permission.devfile.server.model.impl.UserDevfilePermissionsImpl;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-public class JpaWorkerDaoTest {
+import javax.persistence.EntityManager;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-  private JpaWorkerDao workerDao;
+import static org.eclipse.che.inject.Matchers.names;
+import static org.eclipse.che.multiuser.api.permission.server.AbstractPermissionsDomain.SET_PERMISSIONS;
+
+public class JpaUserDevfilePermissionsDaoTest {
+
+  private JpaUserDevfilePermissionsDao userDevfilePermissionsDao;
   private EntityManager manager;
   private TckResourcesCleaner tckResourcesCleaner;
 
@@ -45,7 +46,7 @@ public class JpaWorkerDaoTest {
     final Injector injector =
         Guice.createInjector(new JpaTckModule(), new ExceptionEntityManagerModule());
     manager = injector.getInstance(EntityManager.class);
-    workerDao = injector.getInstance(JpaWorkerDao.class);
+    userDevfilePermissionsDao = injector.getInstance(JpaUserDevfilePermissionsDao.class);
     tckResourcesCleaner = injector.getInstance(TckResourcesCleaner.class);
   }
 
@@ -93,14 +94,15 @@ public class JpaWorkerDaoTest {
     manager.clear();
 
     // Persist the worker
-    WorkerImpl worker =
-        new WorkerImpl("workspaceId", "user0", Collections.singletonList(SET_PERMISSIONS));
+    UserDevfilePermissionsImpl worker =
+        new UserDevfilePermissionsImpl(
+            "workspaceId", "user0", Collections.singletonList(SET_PERMISSIONS));
     manager.getTransaction().begin();
     manager.persist(worker);
     manager.getTransaction().commit();
     manager.clear();
 
-    workerDao.exists("user0", "workspaceId", SET_PERMISSIONS);
+    userDevfilePermissionsDao.exists("user0", "workspaceId", SET_PERMISSIONS);
   }
 
   public class ExceptionEntityManagerModule extends TckModule {
@@ -109,7 +111,8 @@ public class JpaWorkerDaoTest {
     protected void configure() {
       MethodInterceptor interceptor = new EntityManagerExceptionInterceptor();
       requestInjection(interceptor);
-      bindInterceptor(Matchers.subclassesOf(JpaWorkerDao.class), names("doGet"), interceptor);
+      bindInterceptor(
+          Matchers.subclassesOf(JpaUserDevfilePermissionsDao.class), names("doGet"), interceptor);
     }
   }
 }

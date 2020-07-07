@@ -9,49 +9,52 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.multiuser.permission.workspace.server.jpa;
-
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+package org.eclipse.che.multiuser.permission.devfile.server.jpa;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import java.util.Arrays;
-import java.util.List;
-import javax.persistence.EntityManager;
 import org.eclipse.che.account.spi.AccountImpl;
 import org.eclipse.che.api.core.ServerException;
+import org.eclipse.che.api.devfile.server.model.impl.UserDevfileImpl;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceConfigImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import org.eclipse.che.commons.test.tck.TckResourcesCleaner;
-import org.eclipse.che.multiuser.permission.workspace.server.model.impl.WorkerImpl;
-import org.eclipse.che.multiuser.permission.workspace.server.spi.jpa.MultiuserJpaWorkspaceDao;
+import org.eclipse.che.multiuser.permission.devfile.server.model.impl.UserDevfilePermissionsImpl;
+import org.eclipse.che.multiuser.permission.devfile.server.spi.jpa.MultiuserJpaUserDevfileDao;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.persistence.EntityManager;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+
 /** @author Max Shaposhnik */
-public class MultiuserJpaWorkspaceDaoTest {
+public class MultiuserJpaUserDevfileDaoTest {
   private TckResourcesCleaner tckResourcesCleaner;
   private EntityManager manager;
-  private MultiuserJpaWorkspaceDao dao;
+  private MultiuserJpaUserDevfileDao dao;
 
   private AccountImpl account;
-  private WorkerImpl[] workers;
+  private UserDevfilePermissionsImpl[] workers;
   private UserImpl[] users;
   private WorkspaceImpl[] workspaces;
 
   @BeforeClass
   public void setupEntities() throws Exception {
     workers =
-        new WorkerImpl[] {
-          new WorkerImpl("ws1", "user1", Arrays.asList("read", "use", "search")),
-          new WorkerImpl("ws2", "user1", Arrays.asList("read", "search")),
-          new WorkerImpl("ws3", "user1", Arrays.asList("none", "run")),
-          new WorkerImpl("ws1", "user2", Arrays.asList("read", "use"))
+        new UserDevfilePermissionsImpl[] {
+          new UserDevfilePermissionsImpl("ws1", "user1", Arrays.asList("read", "use", "search")),
+          new UserDevfilePermissionsImpl("ws2", "user1", Arrays.asList("read", "search")),
+          new UserDevfilePermissionsImpl("ws3", "user1", Arrays.asList("none", "run")),
+          new UserDevfilePermissionsImpl("ws1", "user2", Arrays.asList("read", "use"))
         };
 
     users =
@@ -75,9 +78,9 @@ public class MultiuserJpaWorkspaceDaoTest {
           new WorkspaceImpl(
               "ws3", account, new WorkspaceConfigImpl("wrksp3", "", "cfg3", null, null, null, null))
         };
-    Injector injector = Guice.createInjector(new WorkspaceTckModule());
+    Injector injector = Guice.createInjector(new UserDevfileTckModule());
     manager = injector.getInstance(EntityManager.class);
-    dao = injector.getInstance(MultiuserJpaWorkspaceDao.class);
+    dao = injector.getInstance(MultiuserJpaUserDevfileDao.class);
     tckResourcesCleaner = injector.getInstance(TckResourcesCleaner.class);
   }
 
@@ -94,7 +97,7 @@ public class MultiuserJpaWorkspaceDaoTest {
       manager.persist(ws);
     }
 
-    for (WorkerImpl worker : workers) {
+    for (UserDevfilePermissionsImpl worker : workers) {
       manager.persist(worker);
     }
     manager.getTransaction().commit();
@@ -106,7 +109,7 @@ public class MultiuserJpaWorkspaceDaoTest {
     manager.getTransaction().begin();
 
     manager
-        .createQuery("SELECT e FROM Worker e", WorkerImpl.class)
+        .createQuery("SELECT e FROM Worker e", UserDevfilePermissionsImpl.class)
         .getResultList()
         .forEach(manager::remove);
 
@@ -129,7 +132,7 @@ public class MultiuserJpaWorkspaceDaoTest {
 
   @Test
   public void shouldGetTotalWorkspaceCount() throws ServerException {
-    assertEquals(dao.getWorkspacesTotalCount(), 3);
+    assertEquals(dao.getTotalCount(), 3);
   }
 
   @AfterClass
@@ -139,7 +142,9 @@ public class MultiuserJpaWorkspaceDaoTest {
 
   @Test
   public void shouldFindStackByPermissions() throws Exception {
-    List<WorkspaceImpl> results = dao.getWorkspaces(users[0].getId(), 30, 0).getItems();
+    List<UserDevfileImpl> results =
+        dao.getDevfiles(users[0].getId(), 30, 0, Collections.emptyList(), Collections.emptyList())
+            .getItems();
     assertEquals(results.size(), 2);
     assertTrue(results.contains(workspaces[0]));
     assertTrue(results.contains(workspaces[1]));

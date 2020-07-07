@@ -9,7 +9,7 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.multiuser.permission.workspace.server.spi.jpa;
+package org.eclipse.che.multiuser.permission.devfile.server.spi.jpa;
 
 import com.google.inject.TypeLiteral;
 import org.eclipse.che.account.spi.AccountImpl;
@@ -46,11 +46,9 @@ import org.eclipse.che.core.db.schema.SchemaInitializer;
 import org.eclipse.che.core.db.schema.impl.flyway.FlywaySchemaInitializer;
 import org.eclipse.che.multiuser.api.permission.server.AbstractPermissionsDomain;
 import org.eclipse.che.multiuser.permission.devfile.server.model.UserDevfilePermissions;
+import org.eclipse.che.multiuser.permission.devfile.server.model.impl.UserDevfilePermissionsImpl;
 import org.eclipse.che.multiuser.permission.devfile.server.spi.UserDevfilePermissionsDao;
-import org.eclipse.che.multiuser.permission.devfile.server.spi.jpa.JpaUserDevfilePermissionsDao;
-import org.eclipse.che.multiuser.permission.workspace.server.model.impl.WorkerImpl;
-import org.eclipse.che.multiuser.permission.workspace.server.spi.WorkerDao;
-import org.eclipse.che.multiuser.permission.workspace.server.spi.tck.WorkerDaoTest;
+import org.eclipse.che.multiuser.permission.devfile.server.spi.tck.UserDevfilePermissionsDaoTest;
 import org.h2.Driver;
 
 /** @author Yevhenii Voevodin */
@@ -94,8 +92,8 @@ public class JpaTckModule extends TckModule {
             .setExceptionHandler(H2ExceptionHandler.class)
             .build());
 
-    bind(new TypeLiteral<AbstractPermissionsDomain<UserDevfilePermissions>>() {})
-        .to(WorkerDaoTest.TestDomain.class);
+    bind(new TypeLiteral<AbstractPermissionsDomain<UserDevfilePermissionsImpl>>() {})
+        .to(UserDevfilePermissionsDaoTest.TestDomain.class);
 
     bind(UserDevfilePermissionsDao.class).to(JpaUserDevfilePermissionsDao.class);
     bind(new TypeLiteral<TckRepository<UserDevfilePermissions>>() {})

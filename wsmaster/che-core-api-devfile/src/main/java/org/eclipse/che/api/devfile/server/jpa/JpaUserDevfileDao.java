@@ -11,9 +11,27 @@
  */
 package org.eclipse.che.api.devfile.server.jpa;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static java.lang.String.format;
+import static java.util.Collections.emptyList;
+import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.toList;
+import static org.eclipse.che.api.devfile.server.jpa.JpaUserDevfileDao.UserDevfileSearchQueryBuilder.newBuilder;
+
 import com.google.common.annotations.Beta;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.persist.Transactional;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.StringJoiner;
+import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
+import javax.persistence.EntityManager;
+import javax.persistence.TypedQuery;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.Page;
@@ -27,25 +45,6 @@ import org.eclipse.che.core.db.jpa.DuplicateKeyException;
 import org.eclipse.che.core.db.jpa.IntegrityConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
-import javax.persistence.EntityManager;
-import javax.persistence.TypedQuery;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.StringJoiner;
-import java.util.stream.Collectors;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static java.lang.String.format;
-import static java.util.Collections.emptyList;
-import static java.util.Objects.requireNonNull;
-import static java.util.stream.Collectors.toList;
-import static org.eclipse.che.api.devfile.server.jpa.JpaUserDevfileDao.UserDevfileSearchQueryBuilder.newBuilder;
 
 @Singleton
 @Beta
@@ -132,7 +131,8 @@ public class JpaUserDevfileDao implements UserDevfileDao {
 
     if (filter != null && !filter.isEmpty()) {
       List<Pair<String, String>> invalidFilter =
-          filter.stream()
+          filter
+              .stream()
               .filter(p -> !p.first.equalsIgnoreCase("devfile.metadata.name"))
               .collect(toList());
       if (!invalidFilter.isEmpty()) {
@@ -143,7 +143,8 @@ public class JpaUserDevfileDao implements UserDevfileDao {
     List<Pair<String, String>> effectiveOrder = DEFAULT_ORDER;
     if (order != null && !order.isEmpty()) {
       List<Pair<String, String>> invalidSortOrder =
-          order.stream()
+          order
+              .stream()
               .filter(p -> !p.second.equalsIgnoreCase("asc"))
               .filter(p -> !p.second.equalsIgnoreCase("desc"))
               .collect(Collectors.toList());
@@ -174,6 +175,18 @@ public class JpaUserDevfileDao implements UserDevfileDao {
               .collect(toList());
       return new Page<>(result, skipCount, maxItems, count);
 
+    } catch (RuntimeException x) {
+      throw new ServerException(x.getLocalizedMessage(), x);
+    }
+  }
+
+  @Override
+  public long getTotalCount() throws ServerException {
+    try {
+      return managerProvider
+          .get()
+          .createNamedQuery("UserDevfile.getTotalCount", Long.class)
+          .getSingleResult();
     } catch (RuntimeException x) {
       throw new ServerException(x.getLocalizedMessage(), x);
     }

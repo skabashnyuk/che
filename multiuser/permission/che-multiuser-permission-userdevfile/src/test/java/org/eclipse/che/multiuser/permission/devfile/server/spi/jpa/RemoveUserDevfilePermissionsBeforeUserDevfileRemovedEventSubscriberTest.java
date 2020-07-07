@@ -9,15 +9,10 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.multiuser.permission.workspace.server.spi.jpa;
-
-import static org.testng.AssertJUnit.assertEquals;
+package org.eclipse.che.multiuser.permission.devfile.server.spi.jpa;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import java.util.Arrays;
-import java.util.stream.Stream;
-import javax.persistence.EntityManager;
 import org.eclipse.che.account.shared.model.Account;
 import org.eclipse.che.account.spi.AccountImpl;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
@@ -25,29 +20,35 @@ import org.eclipse.che.api.workspace.server.jpa.JpaWorkspaceDao;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceConfigImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import org.eclipse.che.commons.test.tck.TckResourcesCleaner;
-import org.eclipse.che.multiuser.permission.workspace.server.model.impl.WorkerImpl;
-import org.eclipse.che.multiuser.permission.workspace.server.spi.jpa.JpaWorkerDao.RemoveWorkersBeforeWorkspaceRemovedEventSubscriber;
+import org.eclipse.che.multiuser.permission.devfile.server.model.impl.UserDevfilePermissionsImpl;
+import org.eclipse.che.multiuser.permission.devfile.server.spi.jpa.JpaUserDevfilePermissionsDao.RemoveUserDevfilePermissionsBeforeUserDevfuleRemovedEventSubscriber;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.persistence.EntityManager;
+import java.util.Arrays;
+import java.util.stream.Stream;
+
+import static org.testng.AssertJUnit.assertEquals;
+
 /**
- * Tests for {@link RemoveWorkersBeforeWorkspaceRemovedEventSubscriber}
+ * Tests for {@link RemoveUserDevfilePermissionsBeforeUserDevfuleRemovedEventSubscriber}
  *
  * @author Sergii Leschenko
  */
-public class RemoveWorkersBeforeWorkspaceRemovedEventSubscriberTest {
+public class RemoveUserDevfilePermissionsBeforeUserDevfileRemovedEventSubscriberTest {
   private TckResourcesCleaner tckResourcesCleaner;
   private EntityManager manager;
-  private JpaWorkerDao workerDao;
+  private JpaUserDevfilePermissionsDao userDevfilePermissionsDao;
   private JpaWorkspaceDao workspaceDao;
 
-  private RemoveWorkersBeforeWorkspaceRemovedEventSubscriber subscriber;
+  private RemoveUserDevfilePermissionsBeforeUserDevfuleRemovedEventSubscriber subscriber;
 
   private WorkspaceImpl workspace;
-  private WorkerImpl[] workers;
+  private UserDevfilePermissionsImpl[] userDevfilePermissions;
   private UserImpl[] users;
   private Account account;
 
@@ -65,18 +66,18 @@ public class RemoveWorkersBeforeWorkspaceRemovedEventSubscriberTest {
         new WorkspaceImpl(
             "ws1", account, new WorkspaceConfigImpl("", "", "cfg1", null, null, null, null));
 
-    workers =
-        new WorkerImpl[] {
-          new WorkerImpl("ws1", "user1", Arrays.asList("read", "use", "run")),
-          new WorkerImpl("ws1", "user2", Arrays.asList("read", "use"))
+    userDevfilePermissions =
+        new UserDevfilePermissionsImpl[] {
+          new UserDevfilePermissionsImpl("ws1", "user1", Arrays.asList("read", "use", "run")),
+          new UserDevfilePermissionsImpl("ws1", "user2", Arrays.asList("read", "use"))
         };
 
     Injector injector = Guice.createInjector(new JpaTckModule());
 
     manager = injector.getInstance(EntityManager.class);
-    workerDao = injector.getInstance(JpaWorkerDao.class);
+    userDevfilePermissionsDao = injector.getInstance(JpaUserDevfilePermissionsDao.class);
     workspaceDao = injector.getInstance(JpaWorkspaceDao.class);
-    subscriber = injector.getInstance(RemoveWorkersBeforeWorkspaceRemovedEventSubscriber.class);
+    subscriber = injector.getInstance(RemoveUserDevfilePermissionsBeforeUserDevfuleRemovedEventSubscriber.class);
     subscriber.subscribe();
     tckResourcesCleaner = injector.getInstance(TckResourcesCleaner.class);
   }
@@ -87,7 +88,7 @@ public class RemoveWorkersBeforeWorkspaceRemovedEventSubscriberTest {
     manager.persist(account);
     manager.persist(workspace);
     Stream.of(users).forEach(manager::persist);
-    Stream.of(workers).forEach(manager::persist);
+    Stream.of(userDevfilePermissions).forEach(manager::persist);
     manager.getTransaction().commit();
     manager.clear();
   }
@@ -97,7 +98,7 @@ public class RemoveWorkersBeforeWorkspaceRemovedEventSubscriberTest {
     manager.getTransaction().begin();
 
     manager
-        .createQuery("SELECT e FROM Worker e", WorkerImpl.class)
+        .createQuery("SELECT e FROM Worker e", UserDevfilePermissionsImpl.class)
         .getResultList()
         .forEach(manager::remove);
 
@@ -128,13 +129,13 @@ public class RemoveWorkersBeforeWorkspaceRemovedEventSubscriberTest {
   public void shouldRemoveAllWorkersWhenWorkspaceIsRemoved() throws Exception {
     workspaceDao.remove(workspace.getId());
 
-    assertEquals(workerDao.getWorkers(workspace.getId(), 1, 0).getTotalItemsCount(), 0);
+    assertEquals(userDevfilePermissionsDao.getUserDevfilePermissions(workspace.getId(), 1, 0).getTotalItemsCount(), 0);
   }
 
   @Test
   public void shouldRemoveAllWorkersWhenPageSizeEqualsToOne() throws Exception {
     subscriber.removeWorkers(workspace.getId(), 1);
 
-    assertEquals(workerDao.getWorkers(workspace.getId(), 1, 0).getTotalItemsCount(), 0);
+    assertEquals(userDevfilePermissionsDao.getUserDevfilePermissions(workspace.getId(), 1, 0).getTotalItemsCount(), 0);
   }
 }

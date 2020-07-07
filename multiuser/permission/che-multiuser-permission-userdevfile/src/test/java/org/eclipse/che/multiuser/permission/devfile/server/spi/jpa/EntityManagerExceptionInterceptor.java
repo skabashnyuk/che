@@ -9,7 +9,7 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  */
-package org.eclipse.che.multiuser.permission.workspace.server.spi.jpa;
+package org.eclipse.che.multiuser.permission.devfile.server.spi.jpa;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
