@@ -12,6 +12,7 @@
 package org.eclipse.che.multiuser.permission.devfile.server.jpa;
 
 import com.google.inject.TypeLiteral;
+import java.util.Collection;
 import org.eclipse.che.account.spi.AccountImpl;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.workspace.server.devfile.SerializableConverter;
@@ -48,14 +49,12 @@ import org.eclipse.che.core.db.h2.jpa.eclipselink.H2ExceptionHandler;
 import org.eclipse.che.core.db.schema.SchemaInitializer;
 import org.eclipse.che.core.db.schema.impl.flyway.FlywaySchemaInitializer;
 import org.eclipse.che.multiuser.api.permission.server.AbstractPermissionsDomain;
-import org.eclipse.che.multiuser.permission.devfile.server.model.UserDevfilePermissions;
-import org.eclipse.che.multiuser.permission.devfile.server.model.impl.UserDevfilePermissionsImpl;
-import org.eclipse.che.multiuser.permission.devfile.server.spi.UserDevfilePermissionsDao;
-import org.eclipse.che.multiuser.permission.devfile.server.spi.jpa.JpaUserDevfilePermissionsDao;
-import org.eclipse.che.multiuser.permission.devfile.server.spi.tck.UserDevfilePermissionsDaoTest;
+import org.eclipse.che.multiuser.permission.devfile.server.model.UserDevfilePermission;
+import org.eclipse.che.multiuser.permission.devfile.server.model.impl.UserDevfilePermissionImpl;
+import org.eclipse.che.multiuser.permission.devfile.server.spi.UserDevfilePermissionDao;
+import org.eclipse.che.multiuser.permission.devfile.server.spi.jpa.JpaUserDevfilePermissionDao;
+import org.eclipse.che.multiuser.permission.devfile.server.spi.tck.UserDevfilePermissionDaoTest;
 import org.h2.Driver;
-
-import java.util.Collection;
 
 /** @author Yevhenii Voevodin */
 public class UserDevfileTckModule extends TckModule {
@@ -74,7 +73,7 @@ public class UserDevfileTckModule extends TckModule {
                 WorkspaceConfigImpl.class,
                 ProjectConfigImpl.class,
                 EnvironmentImpl.class,
-                UserDevfilePermissions.class,
+                UserDevfilePermission.class,
                 MachineConfigImpl.class,
                 SourceStorageImpl.class,
                 ServerConfigImpl.class,
@@ -107,13 +106,13 @@ public class UserDevfileTckModule extends TckModule {
     bind(new TypeLiteral<TckRepository<WorkspaceImpl>>() {}).toInstance(new WorkspaceRepository());
     bind(new TypeLiteral<TckRepository<UserImpl>>() {})
         .toInstance(new JpaTckRepository<>(UserImpl.class));
-    bind(new TypeLiteral<TckRepository<UserDevfilePermissionsImpl>>() {})
-        .toInstance(new JpaTckRepository<>(UserDevfilePermissionsImpl.class));
+    bind(new TypeLiteral<TckRepository<UserDevfilePermissionImpl>>() {})
+        .toInstance(new JpaTckRepository<>(UserDevfilePermissionImpl.class));
 
-    bind(new TypeLiteral<AbstractPermissionsDomain<UserDevfilePermissionsImpl>>() {})
-        .to(UserDevfilePermissionsDaoTest.TestDomain.class);
+    bind(new TypeLiteral<AbstractPermissionsDomain<UserDevfilePermissionImpl>>() {})
+        .to(UserDevfilePermissionDaoTest.TestDomain.class);
 
-    bind(UserDevfilePermissionsDao.class).to(JpaUserDevfilePermissionsDao.class);
+    bind(UserDevfilePermissionDao.class).to(JpaUserDevfilePermissionDao.class);
     bind(WorkspaceDao.class).to(JpaWorkspaceDao.class);
   }
 

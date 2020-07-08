@@ -45,10 +45,10 @@ import org.eclipse.che.core.db.h2.jpa.eclipselink.H2ExceptionHandler;
 import org.eclipse.che.core.db.schema.SchemaInitializer;
 import org.eclipse.che.core.db.schema.impl.flyway.FlywaySchemaInitializer;
 import org.eclipse.che.multiuser.api.permission.server.AbstractPermissionsDomain;
-import org.eclipse.che.multiuser.permission.devfile.server.model.UserDevfilePermissions;
-import org.eclipse.che.multiuser.permission.devfile.server.model.impl.UserDevfilePermissionsImpl;
-import org.eclipse.che.multiuser.permission.devfile.server.spi.UserDevfilePermissionsDao;
-import org.eclipse.che.multiuser.permission.devfile.server.spi.tck.UserDevfilePermissionsDaoTest;
+import org.eclipse.che.multiuser.permission.devfile.server.model.UserDevfilePermission;
+import org.eclipse.che.multiuser.permission.devfile.server.model.impl.UserDevfilePermissionImpl;
+import org.eclipse.che.multiuser.permission.devfile.server.spi.UserDevfilePermissionDao;
+import org.eclipse.che.multiuser.permission.devfile.server.spi.tck.UserDevfilePermissionDaoTest;
 import org.h2.Driver;
 
 /** @author Yevhenii Voevodin */
@@ -68,7 +68,7 @@ public class JpaTckModule extends TckModule {
                 WorkspaceConfigImpl.class,
                 ProjectConfigImpl.class,
                 EnvironmentImpl.class,
-                UserDevfilePermissions.class,
+                UserDevfilePermission.class,
                 MachineConfigImpl.class,
                 SourceStorageImpl.class,
                 ServerConfigImpl.class,
@@ -92,12 +92,12 @@ public class JpaTckModule extends TckModule {
             .setExceptionHandler(H2ExceptionHandler.class)
             .build());
 
-    bind(new TypeLiteral<AbstractPermissionsDomain<UserDevfilePermissionsImpl>>() {})
-        .to(UserDevfilePermissionsDaoTest.TestDomain.class);
+    bind(new TypeLiteral<AbstractPermissionsDomain<UserDevfilePermissionImpl>>() {})
+        .to(UserDevfilePermissionDaoTest.TestDomain.class);
 
-    bind(UserDevfilePermissionsDao.class).to(JpaUserDevfilePermissionsDao.class);
-    bind(new TypeLiteral<TckRepository<UserDevfilePermissions>>() {})
-        .toInstance(new JpaTckRepository<>(UserDevfilePermissions.class));
+    bind(UserDevfilePermissionDao.class).to(JpaUserDevfilePermissionDao.class);
+    bind(new TypeLiteral<TckRepository<UserDevfilePermission>>() {})
+        .toInstance(new JpaTckRepository<>(UserDevfilePermission.class));
     bind(new TypeLiteral<TckRepository<UserImpl>>() {})
         .toInstance(new JpaTckRepository<>(UserImpl.class));
     bind(new TypeLiteral<TckRepository<AccountImpl>>() {})

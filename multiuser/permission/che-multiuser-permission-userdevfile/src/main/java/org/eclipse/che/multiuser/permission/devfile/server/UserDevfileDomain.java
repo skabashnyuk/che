@@ -12,17 +12,16 @@
 package org.eclipse.che.multiuser.permission.devfile.server;
 
 import com.google.common.collect.ImmutableList;
-import org.eclipse.che.multiuser.api.permission.server.AbstractPermissionsDomain;
-import org.eclipse.che.multiuser.permission.devfile.server.model.impl.UserDevfilePermissionsImpl;
-
 import java.util.List;
+import org.eclipse.che.multiuser.api.permission.server.AbstractPermissionsDomain;
+import org.eclipse.che.multiuser.permission.devfile.server.model.impl.UserDevfilePermissionImpl;
 
 /**
  * Domain for storing workspaces' permissions
  *
  * @author Sergii Leschenko
  */
-public class UserDevfileDomain extends AbstractPermissionsDomain<UserDevfilePermissionsImpl> {
+public class UserDevfileDomain extends AbstractPermissionsDomain<UserDevfilePermissionImpl> {
   public static final String READ = "read";
   public static final String DELETE = "delete";
   public static final String UPDATE = "update";
@@ -33,8 +32,8 @@ public class UserDevfileDomain extends AbstractPermissionsDomain<UserDevfilePerm
   }
 
   @Override
-  public UserDevfilePermissionsImpl doCreateInstance(
+  public UserDevfilePermissionImpl doCreateInstance(
       String userId, String instanceId, List<String> allowedActions) {
-    return new UserDevfilePermissionsImpl(instanceId, userId, allowedActions);
+    return new UserDevfilePermissionImpl(instanceId, userId, allowedActions);
   }
 }

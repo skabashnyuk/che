@@ -11,9 +11,16 @@
  */
 package org.eclipse.che.multiuser.permission.devfile.server.spi.jpa;
 
+import static org.eclipse.che.inject.Matchers.names;
+import static org.eclipse.che.multiuser.api.permission.server.AbstractPermissionsDomain.SET_PERMISSIONS;
+
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.matcher.Matchers;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import javax.persistence.EntityManager;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.eclipse.che.account.shared.model.Account;
 import org.eclipse.che.account.spi.AccountImpl;
@@ -22,22 +29,14 @@ import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import org.eclipse.che.commons.test.tck.TckModule;
 import org.eclipse.che.commons.test.tck.TckResourcesCleaner;
-import org.eclipse.che.multiuser.permission.devfile.server.model.impl.UserDevfilePermissionsImpl;
+import org.eclipse.che.multiuser.permission.devfile.server.model.impl.UserDevfilePermissionImpl;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.persistence.EntityManager;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+public class JpaUserDevfilePermissionDaoTest {
 
-import static org.eclipse.che.inject.Matchers.names;
-import static org.eclipse.che.multiuser.api.permission.server.AbstractPermissionsDomain.SET_PERMISSIONS;
-
-public class JpaUserDevfilePermissionsDaoTest {
-
-  private JpaUserDevfilePermissionsDao userDevfilePermissionsDao;
+  private JpaUserDevfilePermissionDao userDevfilePermissionsDao;
   private EntityManager manager;
   private TckResourcesCleaner tckResourcesCleaner;
 
@@ -46,7 +45,7 @@ public class JpaUserDevfilePermissionsDaoTest {
     final Injector injector =
         Guice.createInjector(new JpaTckModule(), new ExceptionEntityManagerModule());
     manager = injector.getInstance(EntityManager.class);
-    userDevfilePermissionsDao = injector.getInstance(JpaUserDevfilePermissionsDao.class);
+    userDevfilePermissionsDao = injector.getInstance(JpaUserDevfilePermissionDao.class);
     tckResourcesCleaner = injector.getInstance(TckResourcesCleaner.class);
   }
 
@@ -94,8 +93,8 @@ public class JpaUserDevfilePermissionsDaoTest {
     manager.clear();
 
     // Persist the worker
-    UserDevfilePermissionsImpl worker =
-        new UserDevfilePermissionsImpl(
+    UserDevfilePermissionImpl worker =
+        new UserDevfilePermissionImpl(
             "workspaceId", "user0", Collections.singletonList(SET_PERMISSIONS));
     manager.getTransaction().begin();
     manager.persist(worker);
@@ -112,7 +111,7 @@ public class JpaUserDevfilePermissionsDaoTest {
       MethodInterceptor interceptor = new EntityManagerExceptionInterceptor();
       requestInjection(interceptor);
       bindInterceptor(
-          Matchers.subclassesOf(JpaUserDevfilePermissionsDao.class), names("doGet"), interceptor);
+          Matchers.subclassesOf(JpaUserDevfilePermissionDao.class), names("doGet"), interceptor);
     }
   }
 }

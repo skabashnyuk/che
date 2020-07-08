@@ -11,8 +11,15 @@
  */
 package org.eclipse.che.multiuser.permission.devfile.server.jpa;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import javax.persistence.EntityManager;
 import org.eclipse.che.account.spi.AccountImpl;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.devfile.server.model.impl.UserDevfileImpl;
@@ -20,21 +27,13 @@ import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceConfigImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import org.eclipse.che.commons.test.tck.TckResourcesCleaner;
-import org.eclipse.che.multiuser.permission.devfile.server.model.impl.UserDevfilePermissionsImpl;
+import org.eclipse.che.multiuser.permission.devfile.server.model.impl.UserDevfilePermissionImpl;
 import org.eclipse.che.multiuser.permission.devfile.server.spi.jpa.MultiuserJpaUserDevfileDao;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import javax.persistence.EntityManager;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
 
 /** @author Max Shaposhnik */
 public class MultiuserJpaUserDevfileDaoTest {
@@ -43,18 +42,18 @@ public class MultiuserJpaUserDevfileDaoTest {
   private MultiuserJpaUserDevfileDao dao;
 
   private AccountImpl account;
-  private UserDevfilePermissionsImpl[] workers;
+  private UserDevfilePermissionImpl[] workers;
   private UserImpl[] users;
   private WorkspaceImpl[] workspaces;
 
   @BeforeClass
   public void setupEntities() throws Exception {
     workers =
-        new UserDevfilePermissionsImpl[] {
-          new UserDevfilePermissionsImpl("ws1", "user1", Arrays.asList("read", "use", "search")),
-          new UserDevfilePermissionsImpl("ws2", "user1", Arrays.asList("read", "search")),
-          new UserDevfilePermissionsImpl("ws3", "user1", Arrays.asList("none", "run")),
-          new UserDevfilePermissionsImpl("ws1", "user2", Arrays.asList("read", "use"))
+        new UserDevfilePermissionImpl[] {
+          new UserDevfilePermissionImpl("ws1", "user1", Arrays.asList("read", "use", "search")),
+          new UserDevfilePermissionImpl("ws2", "user1", Arrays.asList("read", "search")),
+          new UserDevfilePermissionImpl("ws3", "user1", Arrays.asList("none", "run")),
+          new UserDevfilePermissionImpl("ws1", "user2", Arrays.asList("read", "use"))
         };
 
     users =
@@ -97,7 +96,7 @@ public class MultiuserJpaUserDevfileDaoTest {
       manager.persist(ws);
     }
 
-    for (UserDevfilePermissionsImpl worker : workers) {
+    for (UserDevfilePermissionImpl worker : workers) {
       manager.persist(worker);
     }
     manager.getTransaction().commit();
@@ -109,7 +108,7 @@ public class MultiuserJpaUserDevfileDaoTest {
     manager.getTransaction().begin();
 
     manager
-        .createQuery("SELECT e FROM Worker e", UserDevfilePermissionsImpl.class)
+        .createQuery("SELECT e FROM Worker e", UserDevfilePermissionImpl.class)
         .getResultList()
         .forEach(manager::remove);
 

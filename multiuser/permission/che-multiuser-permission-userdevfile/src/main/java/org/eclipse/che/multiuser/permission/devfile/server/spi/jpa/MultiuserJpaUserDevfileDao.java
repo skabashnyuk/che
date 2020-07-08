@@ -11,6 +11,8 @@
  */
 package org.eclipse.che.multiuser.permission.devfile.server.spi.jpa;
 
+import java.util.List;
+import javax.inject.Singleton;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.Page;
@@ -18,9 +20,6 @@ import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.devfile.server.model.impl.UserDevfileImpl;
 import org.eclipse.che.api.devfile.server.spi.UserDevfileDao;
 import org.eclipse.che.commons.lang.Pair;
-
-import javax.inject.Singleton;
-import java.util.List;
 
 /** JPA based implementation of {@link UserDevfileDao}. */
 @Singleton

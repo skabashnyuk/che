@@ -1,15 +1,25 @@
+/*
+ * Copyright (c) 2012-2018 Red Hat, Inc.
+ * This program and the accompanying materials are made
+ * available under the terms of the Eclipse Public License 2.0
+ * which is available at https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *   Red Hat, Inc. - initial API and implementation
+ */
 package org.eclipse.che.multiuser.permission.devfile.server.spi;
-
-import org.eclipse.che.api.core.NotFoundException;
-import org.eclipse.che.api.core.Page;
-import org.eclipse.che.api.core.ServerException;
-import org.eclipse.che.multiuser.permission.devfile.server.model.impl.UserDevfilePermissionsImpl;
 
 import java.util.List;
 import java.util.Optional;
+import org.eclipse.che.api.core.NotFoundException;
+import org.eclipse.che.api.core.Page;
+import org.eclipse.che.api.core.ServerException;
+import org.eclipse.che.multiuser.permission.devfile.server.model.impl.UserDevfilePermissionImpl;
 
-/** Defines data access object contract for {@link UserDevfilePermissionsImpl}. */
-public interface UserDevfilePermissionsDao {
+/** Defines data access object contract for {@link UserDevfilePermissionImpl}. */
+public interface UserDevfilePermissionDao {
 
   /**
    * Stores (adds or updates) UserDevfilePermissions.
@@ -19,7 +29,7 @@ public interface UserDevfilePermissionsDao {
    * @throws NullPointerException when {@code userDevfilePermissions} is null
    * @throws ServerException when any other error occurs during userDevfilePermissions storing
    */
-  Optional<UserDevfilePermissionsImpl> store(UserDevfilePermissionsImpl userDevfilePermissions)
+  Optional<UserDevfilePermissionImpl> store(UserDevfilePermissionImpl userDevfilePermissions)
       throws ServerException;
 
   /**
@@ -33,7 +43,7 @@ public interface UserDevfilePermissionsDao {
    *     found
    * @throws ServerException when any other error occurs during worker fetching
    */
-  UserDevfilePermissionsImpl getUserDevfilePermissions(String userDevfileId, String userId)
+  UserDevfilePermissionImpl getUserDevfilePermission(String userDevfileId, String userId)
       throws ServerException, NotFoundException;
 
   /**
@@ -47,10 +57,10 @@ public interface UserDevfilePermissionsDao {
    * @throws NullPointerException when {@code UserDevfile} or {@code user} is null
    * @throws ServerException when any other error occurs during userDevfilePermissions removing
    */
-  void removeUserDevfilePermissions(String userDevfileId, String userId) throws ServerException;
+  void removeUserDevfilePermission(String userDevfileId, String userId) throws ServerException;
 
   /**
-   * Gets userDevfilePermissions by user devfile
+   * Gets userDevfilePermissions by user devfile id.
    *
    * @param userDevfileId user devfile identifier
    * @param maxItems the maximum number of userDevfilePermissions to return
@@ -59,8 +69,8 @@ public interface UserDevfilePermissionsDao {
    * @throws NullPointerException when {@code userDevfile} is null
    * @throws ServerException when any other error occurs during userDevfilePermissions fetching
    */
-  Page<UserDevfilePermissionsImpl> getUserDevfilePermissions(String userDevfileId, int maxItems, long skipCount)
-      throws ServerException;
+  Page<UserDevfilePermissionImpl> getUserDevfilePermission(
+      String userDevfileId, int maxItems, long skipCount) throws ServerException;
 
   /**
    * Gets UserDevfilePermissions by user
@@ -70,5 +80,6 @@ public interface UserDevfilePermissionsDao {
    * @throws NullPointerException when {@code user} is null
    * @throws ServerException when any other error occurs during UserDevfilePermissions fetching
    */
-  List<UserDevfilePermissionsImpl> getUserDevfilePermissionsByUser(String userId) throws ServerException;
+  List<UserDevfilePermissionImpl> getUserDevfilePermissionByUser(String userId)
+      throws ServerException;
 }
