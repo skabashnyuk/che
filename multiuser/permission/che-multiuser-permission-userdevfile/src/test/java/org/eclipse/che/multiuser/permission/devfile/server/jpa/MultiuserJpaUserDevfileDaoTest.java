@@ -11,9 +11,12 @@
  */
 package org.eclipse.che.multiuser.permission.devfile.server.jpa;
 
+import static org.eclipse.che.commons.lang.NameGenerator.generate;
+import static org.eclipse.che.multiuser.permission.devfile.server.TestObjectGenerator.createDevfile;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
+import com.google.common.collect.ImmutableList;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import java.util.Arrays;
@@ -24,7 +27,6 @@ import org.eclipse.che.account.spi.AccountImpl;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.devfile.server.model.impl.UserDevfileImpl;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
-import org.eclipse.che.api.workspace.server.model.impl.WorkspaceConfigImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import org.eclipse.che.commons.test.tck.TckResourcesCleaner;
 import org.eclipse.che.multiuser.permission.devfile.server.model.impl.UserDevfilePermissionImpl;
@@ -41,42 +43,31 @@ public class MultiuserJpaUserDevfileDaoTest {
   private EntityManager manager;
   private MultiuserJpaUserDevfileDao dao;
 
-  private AccountImpl account;
-  private UserDevfilePermissionImpl[] workers;
-  private UserImpl[] users;
-  private WorkspaceImpl[] workspaces;
+  private List<UserDevfilePermissionImpl> workers;
+  private List<UserImpl> users;
+  private List<UserDevfileImpl> userDevfiles;
 
   @BeforeClass
   public void setupEntities() throws Exception {
     workers =
-        new UserDevfilePermissionImpl[] {
-          new UserDevfilePermissionImpl("ws1", "user1", Arrays.asList("read", "use", "search")),
-          new UserDevfilePermissionImpl("ws2", "user1", Arrays.asList("read", "search")),
-          new UserDevfilePermissionImpl("ws3", "user1", Arrays.asList("none", "run")),
-          new UserDevfilePermissionImpl("ws1", "user2", Arrays.asList("read", "use"))
-        };
+        ImmutableList.of(
+            new UserDevfilePermissionImpl("ws1", "user1", Arrays.asList("read", "use", "search")),
+            new UserDevfilePermissionImpl("ws2", "user1", Arrays.asList("read", "search")),
+            new UserDevfilePermissionImpl("ws3", "user1", Arrays.asList("none", "run")),
+            new UserDevfilePermissionImpl("ws1", "user2", Arrays.asList("read", "use")));
 
     users =
-        new UserImpl[] {
-          new UserImpl("user1", "user1@com.com", "usr1"),
-          new UserImpl("user2", "user2@com.com", "usr2")
-        };
+        ImmutableList.of(
+            new UserImpl("user1", "user1@com.com", "usr1"),
+            new UserImpl("user2", "user2@com.com", "usr2"));
 
-    account = new AccountImpl("account1", "accountName", "test");
-
-    workspaces =
-        new WorkspaceImpl[] {
-          new WorkspaceImpl(
-              "ws1",
-              account,
-              new WorkspaceConfigImpl("wrksp1", "", "cfg1", null, null, null, null)),
-          new WorkspaceImpl(
-              "ws2",
-              account,
-              new WorkspaceConfigImpl("wrksp2", "", "cfg2", null, null, null, null)),
-          new WorkspaceImpl(
-              "ws3", account, new WorkspaceConfigImpl("wrksp3", "", "cfg3", null, null, null, null))
-        };
+    userDevfiles =
+        ImmutableList.of(
+            new UserDevfileImpl(generate("id", 6), createDevfile(generate("name", 6))),
+            new UserDevfileImpl(generate("id", 6), createDevfile(generate("name", 6))),
+            new UserDevfileImpl(generate("id", 6), createDevfile(generate("name", 6))),
+            new UserDevfileImpl(generate("id", 6), createDevfile(generate("name", 6))),
+            new UserDevfileImpl(generate("id", 6), createDevfile(generate("name", 6))));
     Injector injector = Guice.createInjector(new UserDevfileTckModule());
     manager = injector.getInstance(EntityManager.class);
     dao = injector.getInstance(MultiuserJpaUserDevfileDao.class);
@@ -86,19 +77,11 @@ public class MultiuserJpaUserDevfileDaoTest {
   @BeforeMethod
   public void setUp() throws Exception {
     manager.getTransaction().begin();
-    manager.persist(account);
 
-    for (UserImpl user : users) {
-      manager.persist(user);
-    }
+    users.forEach(manager::persist);
+    userDevfiles.forEach(manager::persist);
+    workers.forEach(manager::persist);
 
-    for (WorkspaceImpl ws : workspaces) {
-      manager.persist(ws);
-    }
-
-    for (UserDevfilePermissionImpl worker : workers) {
-      manager.persist(worker);
-    }
     manager.getTransaction().commit();
     manager.clear();
   }
@@ -142,10 +125,11 @@ public class MultiuserJpaUserDevfileDaoTest {
   @Test
   public void shouldFindStackByPermissions() throws Exception {
     List<UserDevfileImpl> results =
-        dao.getDevfiles(users[0].getId(), 30, 0, Collections.emptyList(), Collections.emptyList())
+        dao.getDevfiles(
+                users.get(0).getId(), 30, 0, Collections.emptyList(), Collections.emptyList())
             .getItems();
     assertEquals(results.size(), 2);
-    assertTrue(results.contains(workspaces[0]));
-    assertTrue(results.contains(workspaces[1]));
+    assertTrue(results.contains(userDevfiles.get(0)));
+    assertTrue(results.contains(userDevfiles.get(1)));
   }
 }

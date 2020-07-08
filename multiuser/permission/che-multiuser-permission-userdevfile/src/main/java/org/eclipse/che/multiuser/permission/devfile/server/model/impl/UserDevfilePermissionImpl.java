@@ -78,7 +78,7 @@ public class UserDevfilePermissionImpl extends AbstractPermissions
   @Column(name = "actions")
   @CollectionTable(
       name = "che_userdevfile_permissions_actions",
-      joinColumns = @JoinColumn(name = "userdevfilepermissions_id"))
+      joinColumns = @JoinColumn(name = "userdevfile_permissions_id"))
   protected List<String> actions;
 
   public UserDevfilePermissionImpl() {}

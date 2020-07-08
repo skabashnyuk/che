@@ -11,8 +11,13 @@
  */
 package org.eclipse.che.multiuser.permission.devfile.server.spi.tck;
 
-import static org.testng.Assert.*;
+import static org.eclipse.che.commons.lang.NameGenerator.generate;
+import static org.eclipse.che.multiuser.permission.devfile.server.TestObjectGenerator.createDevfile;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
+import com.google.common.collect.ImmutableList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -21,13 +26,11 @@ import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
-import org.eclipse.che.account.spi.AccountImpl;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.Page;
 import org.eclipse.che.api.core.ServerException;
+import org.eclipse.che.api.devfile.server.model.impl.UserDevfileImpl;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
-import org.eclipse.che.api.workspace.server.model.impl.WorkspaceConfigImpl;
-import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import org.eclipse.che.commons.test.tck.TckListener;
 import org.eclipse.che.commons.test.tck.repository.TckRepository;
 import org.eclipse.che.commons.test.tck.repository.TckRepositoryException;
@@ -56,9 +59,7 @@ public class UserDevfilePermissionDaoTest {
 
   @Inject private TckRepository<UserImpl> userRepository;
 
-  @Inject private TckRepository<AccountImpl> accountRepository;
-
-  @Inject private TckRepository<WorkspaceImpl> workspaceRepository;
+  @Inject private TckRepository<UserDevfileImpl> devfileRepository;
 
   UserDevfilePermissionImpl[] permissions;
 
@@ -83,22 +84,13 @@ public class UserDevfilePermissionDaoTest {
         };
     userRepository.createAll(Arrays.asList(users));
 
-    AccountImpl account = new AccountImpl("account1", "accountName", "test");
-    accountRepository.createAll(Collections.singletonList(account));
-    workspaceRepository.createAll(
-        Arrays.asList(
-            new WorkspaceImpl(
-                "ws0",
-                account,
-                new WorkspaceConfigImpl("ws-name0", "", "cfg0", null, null, null, null)),
-            new WorkspaceImpl(
-                "ws1",
-                account,
-                new WorkspaceConfigImpl("ws-name1", "", "cfg1", null, null, null, null)),
-            new WorkspaceImpl(
-                "ws2",
-                account,
-                new WorkspaceConfigImpl("ws-name2", "", "cfg2", null, null, null, null))));
+    devfileRepository.createAll(
+        ImmutableList.of(
+            new UserDevfileImpl(generate("id", 6), createDevfile(generate("name", 6))),
+            new UserDevfileImpl(generate("id", 6), createDevfile(generate("name", 6))),
+            new UserDevfileImpl(generate("id", 6), createDevfile(generate("name", 6))),
+            new UserDevfileImpl(generate("id", 6), createDevfile(generate("name", 6))),
+            new UserDevfileImpl(generate("id", 6), createDevfile(generate("name", 6)))));
 
     workerRepository.createAll(
         Stream.of(permissions).map(UserDevfilePermissionImpl::new).collect(Collectors.toList()));
@@ -107,9 +99,8 @@ public class UserDevfilePermissionDaoTest {
   @AfterMethod
   public void cleanUp() throws TckRepositoryException {
     workerRepository.removeAll();
-    workspaceRepository.removeAll();
+    devfileRepository.removeAll();
     userRepository.removeAll();
-    accountRepository.removeAll();
   }
 
   /* WorkerDao.store() tests */

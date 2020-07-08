@@ -13,6 +13,7 @@ package org.eclipse.che.multiuser.permission.devfile.server.spi.jpa;
 
 import com.google.inject.TypeLiteral;
 import org.eclipse.che.account.spi.AccountImpl;
+import org.eclipse.che.api.devfile.server.model.impl.UserDevfileImpl;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.workspace.server.devfile.SerializableConverter;
 import org.eclipse.che.api.workspace.server.model.impl.CommandImpl;
@@ -68,7 +69,7 @@ public class JpaTckModule extends TckModule {
                 WorkspaceConfigImpl.class,
                 ProjectConfigImpl.class,
                 EnvironmentImpl.class,
-                UserDevfilePermission.class,
+                UserDevfilePermissionImpl.class,
                 MachineConfigImpl.class,
                 SourceStorageImpl.class,
                 ServerConfigImpl.class,
@@ -85,6 +86,7 @@ public class JpaTckModule extends TckModule {
                 EnvImpl.class,
                 ProjectImpl.class,
                 SourceImpl.class,
+                UserDevfileImpl.class,
                 org.eclipse.che.api.workspace.server.model.impl.devfile.VolumeImpl.class)
             .addEntityClass(
                 "org.eclipse.che.api.workspace.server.model.impl.ProjectConfigImpl$Attribute")

@@ -11,8 +11,10 @@
  */
 package org.eclipse.che.multiuser.permission.devfile.server.spi.jpa;
 
+import static org.eclipse.che.commons.lang.NameGenerator.generate;
 import static org.eclipse.che.inject.Matchers.names;
 import static org.eclipse.che.multiuser.api.permission.server.AbstractPermissionsDomain.SET_PERMISSIONS;
+import static org.eclipse.che.multiuser.permission.devfile.server.TestObjectGenerator.createDevfile;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -22,11 +24,9 @@ import java.util.Collections;
 import java.util.List;
 import javax.persistence.EntityManager;
 import org.aopalliance.intercept.MethodInterceptor;
-import org.eclipse.che.account.shared.model.Account;
-import org.eclipse.che.account.spi.AccountImpl;
 import org.eclipse.che.api.core.ServerException;
+import org.eclipse.che.api.devfile.server.model.impl.UserDevfileImpl;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
-import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import org.eclipse.che.commons.test.tck.TckModule;
 import org.eclipse.che.commons.test.tck.TckResourcesCleaner;
 import org.eclipse.che.multiuser.permission.devfile.server.model.impl.UserDevfilePermissionImpl;
@@ -53,10 +53,9 @@ public class JpaUserDevfilePermissionDaoTest {
   private void cleanup() {
     manager.getTransaction().begin();
     final List<Object> entities = new ArrayList<>();
-    entities.addAll(manager.createQuery("SELECT w FROM Worker w").getResultList());
-    entities.addAll(manager.createQuery("SELECT w FROM Workspace w").getResultList());
+    entities.addAll(manager.createQuery("SELECT w FROM UserDevfilePermission p").getResultList());
+    entities.addAll(manager.createQuery("SELECT w FROM UserDevfile d").getResultList());
     entities.addAll(manager.createQuery("SELECT u FROM Usr u").getResultList());
-    entities.addAll(manager.createQuery("SELECT a FROM Account a").getResultList());
     for (Object entity : entities) {
       manager.remove(entity);
     }
@@ -70,22 +69,15 @@ public class JpaUserDevfilePermissionDaoTest {
   public void shouldThrowServerExceptionOnExistsWhenRuntimeExceptionOccursInDoGetMethod()
       throws Exception {
 
-    final Account account = new AccountImpl("accountId", "namespace", "test");
-    final WorkspaceImpl workspace =
-        WorkspaceImpl.builder().setId("workspaceId").setAccount(account).build();
-
-    // Persist the account
+    final UserDevfileImpl userDevfile =
+        new UserDevfileImpl(generate("id", 6), createDevfile(generate("name", 6)));
+    // Persist the userdevfule
     manager.getTransaction().begin();
-    manager.persist(account);
+    manager.persist(userDevfile);
     manager.getTransaction().commit();
     manager.clear();
 
-    // Persist the workspace
-    manager.getTransaction().begin();
-    manager.persist(workspace);
-    manager.getTransaction().commit();
-    manager.clear();
-    final UserImpl user = new UserImpl("user0", "user0@com.com", "usr0");
+    final UserImpl user = new UserImpl(generate("user", 6), "user0@com.com", "usr0");
     // Persist the user
     manager.getTransaction().begin();
     manager.persist(user);
@@ -95,13 +87,13 @@ public class JpaUserDevfilePermissionDaoTest {
     // Persist the worker
     UserDevfilePermissionImpl worker =
         new UserDevfilePermissionImpl(
-            "workspaceId", "user0", Collections.singletonList(SET_PERMISSIONS));
+            userDevfile.getId(), user.getId(), Collections.singletonList(SET_PERMISSIONS));
     manager.getTransaction().begin();
     manager.persist(worker);
     manager.getTransaction().commit();
     manager.clear();
 
-    userDevfilePermissionsDao.exists("user0", "workspaceId", SET_PERMISSIONS);
+    userDevfilePermissionsDao.exists(user.getId(), userDevfile.getId(), SET_PERMISSIONS);
   }
 
   public class ExceptionEntityManagerModule extends TckModule {
