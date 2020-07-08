@@ -25,11 +25,11 @@ import java.util.List;
 public class UserDevfileDomain extends AbstractPermissionsDomain<UserDevfilePermissionsImpl> {
   public static final String READ = "read";
   public static final String DELETE = "delete";
-
+  public static final String UPDATE = "update";
   public static final String DOMAIN_ID = "userDevfile";
 
   public UserDevfileDomain() {
-    super(DOMAIN_ID, ImmutableList.of(READ, DELETE));
+    super(DOMAIN_ID, ImmutableList.of(READ, DELETE, UPDATE, DELETE));
   }
 
   @Override

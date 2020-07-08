@@ -19,6 +19,7 @@ import org.eclipse.che.api.devfile.server.UserDevfileService;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.everrest.CheMethodInvokerFilter;
+import org.eclipse.che.multiuser.permission.devfile.server.UserDevfileDomain;
 import org.everrest.core.Filter;
 import org.everrest.core.resource.GenericResourceMethod;
 
@@ -30,8 +31,6 @@ import javax.ws.rs.Path;
  *
  * <p>Filter contains rules for protecting of all methods of {@link UserDevfileService}.<br>
  * In case when requested method is unknown filter throws {@link ForbiddenException}
- *
- * @author Sergii Leschenko
  */
 @Filter
 @Path("/userdevfile{path:(/.*)?}")
@@ -45,22 +44,27 @@ public class UserDevfilePermissionsFilter extends CheMethodInvokerFilter {
 
   @Override
   public void filter(GenericResourceMethod genericResourceMethod, Object[] arguments)
-      throws ForbiddenException, ServerException, NotFoundException {
+      throws ForbiddenException {
     final String methodName = genericResourceMethod.getMethod().getName();
-
     final Subject currentSubject = EnvironmentContext.getCurrent().getSubject();
-    String action;
-    String key;
-
     switch (methodName) {
-      case "create":
       case "getById":
-      case "getUserDevfiles":
+        currentSubject.checkPermission(
+            UserDevfileDomain.DOMAIN_ID, ((String) arguments[0]), UserDevfileDomain.READ);
+        break;
       case "update":
+        currentSubject.checkPermission(
+            UserDevfileDomain.DOMAIN_ID, ((String) arguments[0]), UserDevfileDomain.UPDATE);
+        break;
       case "delete":
+        currentSubject.checkPermission(
+            UserDevfileDomain.DOMAIN_ID, ((String) arguments[0]), UserDevfileDomain.DELETE);
+        break;
+      case "create":
+      case "getUserDevfiles":
+        return;
       default:
         throw new ForbiddenException("The user does not have permission to perform this operation");
     }
-
   }
 }
