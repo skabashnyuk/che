@@ -23,11 +23,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import javax.persistence.EntityManager;
-import org.eclipse.che.account.spi.AccountImpl;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.devfile.server.model.impl.UserDevfileImpl;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
-import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import org.eclipse.che.commons.test.tck.TckResourcesCleaner;
 import org.eclipse.che.multiuser.permission.devfile.server.model.impl.UserDevfilePermissionImpl;
 import org.eclipse.che.multiuser.permission.devfile.server.spi.jpa.MultiuserJpaUserDevfileDao;
@@ -43,18 +41,19 @@ public class MultiuserJpaUserDevfileDaoTest {
   private EntityManager manager;
   private MultiuserJpaUserDevfileDao dao;
 
-  private List<UserDevfilePermissionImpl> workers;
+  private List<UserDevfilePermissionImpl> permissions;
   private List<UserImpl> users;
   private List<UserDevfileImpl> userDevfiles;
 
   @BeforeClass
   public void setupEntities() throws Exception {
-    workers =
+    permissions =
         ImmutableList.of(
-            new UserDevfilePermissionImpl("ws1", "user1", Arrays.asList("read", "use", "search")),
-            new UserDevfilePermissionImpl("ws2", "user1", Arrays.asList("read", "search")),
-            new UserDevfilePermissionImpl("ws3", "user1", Arrays.asList("none", "run")),
-            new UserDevfilePermissionImpl("ws1", "user2", Arrays.asList("read", "use")));
+            new UserDevfilePermissionImpl(
+                "devfile_id1", "user1", Arrays.asList("read", "use", "search")),
+            new UserDevfilePermissionImpl("devfile_id2", "user1", Arrays.asList("read", "search")),
+            new UserDevfilePermissionImpl("devfile_id3", "user1", Arrays.asList("none", "run")),
+            new UserDevfilePermissionImpl("devfile_id1", "user2", Arrays.asList("read", "use")));
 
     users =
         ImmutableList.of(
@@ -63,11 +62,9 @@ public class MultiuserJpaUserDevfileDaoTest {
 
     userDevfiles =
         ImmutableList.of(
-            new UserDevfileImpl(generate("id", 6), createDevfile(generate("name", 6))),
-            new UserDevfileImpl(generate("id", 6), createDevfile(generate("name", 6))),
-            new UserDevfileImpl(generate("id", 6), createDevfile(generate("name", 6))),
-            new UserDevfileImpl(generate("id", 6), createDevfile(generate("name", 6))),
-            new UserDevfileImpl(generate("id", 6), createDevfile(generate("name", 6))));
+            new UserDevfileImpl("devfile_id1", createDevfile(generate("name", 6))),
+            new UserDevfileImpl("devfile_id2", createDevfile(generate("name", 6))),
+            new UserDevfileImpl("devfile_id3", createDevfile(generate("name", 6))));
     Injector injector = Guice.createInjector(new UserDevfileTckModule());
     manager = injector.getInstance(EntityManager.class);
     dao = injector.getInstance(MultiuserJpaUserDevfileDao.class);
@@ -80,7 +77,7 @@ public class MultiuserJpaUserDevfileDaoTest {
 
     users.forEach(manager::persist);
     userDevfiles.forEach(manager::persist);
-    workers.forEach(manager::persist);
+    permissions.forEach(manager::persist);
 
     manager.getTransaction().commit();
     manager.clear();
@@ -91,12 +88,12 @@ public class MultiuserJpaUserDevfileDaoTest {
     manager.getTransaction().begin();
 
     manager
-        .createQuery("SELECT e FROM Worker e", UserDevfilePermissionImpl.class)
+        .createQuery("SELECT e FROM UserDevfilePermission e", UserDevfilePermissionImpl.class)
         .getResultList()
         .forEach(manager::remove);
 
     manager
-        .createQuery("SELECT w FROM Workspace w", WorkspaceImpl.class)
+        .createQuery("SELECT w FROM UserDevfile w", UserDevfileImpl.class)
         .getResultList()
         .forEach(manager::remove);
 
@@ -105,10 +102,6 @@ public class MultiuserJpaUserDevfileDaoTest {
         .getResultList()
         .forEach(manager::remove);
 
-    manager
-        .createQuery("SELECT a FROM Account a", AccountImpl.class)
-        .getResultList()
-        .forEach(manager::remove);
     manager.getTransaction().commit();
   }
 

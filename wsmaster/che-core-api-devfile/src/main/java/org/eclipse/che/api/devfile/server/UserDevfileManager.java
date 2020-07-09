@@ -126,7 +126,6 @@ public class UserDevfileManager {
         "UserDevfile with id '{}' removed by user '{}'",
         id,
         EnvironmentContext.getCurrent().getSubject().getUserName());
-    eventService.publish(new DevfileDeletedEvent(id));
   }
 
   /**

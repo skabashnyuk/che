@@ -12,8 +12,8 @@
 package org.eclipse.che.multiuser.permission.devfile.server.jpa;
 
 import com.google.inject.TypeLiteral;
-import java.util.Collection;
 import org.eclipse.che.account.spi.AccountImpl;
+import org.eclipse.che.api.devfile.server.model.impl.UserDevfileImpl;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.workspace.server.devfile.SerializableConverter;
 import org.eclipse.che.api.workspace.server.jpa.JpaWorkspaceDao;
@@ -43,7 +43,6 @@ import org.eclipse.che.commons.test.tck.TckModule;
 import org.eclipse.che.commons.test.tck.TckResourcesCleaner;
 import org.eclipse.che.commons.test.tck.repository.JpaTckRepository;
 import org.eclipse.che.commons.test.tck.repository.TckRepository;
-import org.eclipse.che.commons.test.tck.repository.TckRepositoryException;
 import org.eclipse.che.core.db.DBInitializer;
 import org.eclipse.che.core.db.h2.jpa.eclipselink.H2ExceptionHandler;
 import org.eclipse.che.core.db.schema.SchemaInitializer;
@@ -81,6 +80,8 @@ public class UserDevfileTckModule extends TckModule {
                 RecipeImpl.class,
                 VolumeImpl.class,
                 // devfile
+                UserDevfileImpl.class,
+                UserDevfilePermissionImpl.class,
                 ActionImpl.class,
                 org.eclipse.che.api.workspace.server.model.impl.devfile.CommandImpl.class,
                 ComponentImpl.class,
@@ -101,9 +102,8 @@ public class UserDevfileTckModule extends TckModule {
         .toInstance(new FlywaySchemaInitializer(server.getDataSource(), "che-schema"));
     bind(TckResourcesCleaner.class).toInstance(new H2JpaCleaner(server));
 
-    bind(new TypeLiteral<TckRepository<AccountImpl>>() {})
-        .toInstance(new JpaTckRepository<>(AccountImpl.class));
-    bind(new TypeLiteral<TckRepository<WorkspaceImpl>>() {}).toInstance(new WorkspaceRepository());
+    bind(new TypeLiteral<TckRepository<UserDevfileImpl>>() {})
+        .toInstance(new JpaTckRepository<>(UserDevfileImpl.class));
     bind(new TypeLiteral<TckRepository<UserImpl>>() {})
         .toInstance(new JpaTckRepository<>(UserImpl.class));
     bind(new TypeLiteral<TckRepository<UserDevfilePermissionImpl>>() {})
@@ -114,20 +114,5 @@ public class UserDevfileTckModule extends TckModule {
 
     bind(UserDevfilePermissionDao.class).to(JpaUserDevfilePermissionDao.class);
     bind(WorkspaceDao.class).to(JpaWorkspaceDao.class);
-  }
-
-  private static class WorkspaceRepository extends JpaTckRepository<WorkspaceImpl> {
-    public WorkspaceRepository() {
-      super(WorkspaceImpl.class);
-    }
-
-    @Override
-    public void createAll(Collection<? extends WorkspaceImpl> entities)
-        throws TckRepositoryException {
-      for (WorkspaceImpl entity : entities) {
-        entity.getConfig().getProjects().forEach(ProjectConfigImpl::prePersistAttributes);
-      }
-      super.createAll(entities);
-    }
   }
 }
