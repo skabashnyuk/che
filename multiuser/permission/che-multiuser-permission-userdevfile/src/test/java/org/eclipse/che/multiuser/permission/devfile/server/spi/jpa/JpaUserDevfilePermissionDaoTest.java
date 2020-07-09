@@ -53,8 +53,8 @@ public class JpaUserDevfilePermissionDaoTest {
   private void cleanup() {
     manager.getTransaction().begin();
     final List<Object> entities = new ArrayList<>();
-    entities.addAll(manager.createQuery("SELECT w FROM UserDevfilePermission p").getResultList());
-    entities.addAll(manager.createQuery("SELECT w FROM UserDevfile d").getResultList());
+    entities.addAll(manager.createQuery("SELECT p FROM UserDevfilePermission p").getResultList());
+    entities.addAll(manager.createQuery("SELECT d FROM UserDevfile d").getResultList());
     entities.addAll(manager.createQuery("SELECT u FROM Usr u").getResultList());
     for (Object entity : entities) {
       manager.remove(entity);
