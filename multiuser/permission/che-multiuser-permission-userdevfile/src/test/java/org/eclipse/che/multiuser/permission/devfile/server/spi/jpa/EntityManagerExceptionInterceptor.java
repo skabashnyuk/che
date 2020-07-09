@@ -23,6 +23,6 @@ public class EntityManagerExceptionInterceptor implements MethodInterceptor {
   @Override
   public Object invoke(MethodInvocation methodInvocation) throws Throwable {
     emf.get().getTransaction().setRollbackOnly();
-    throw new RuntimeException("Database exception");
+    throw new RuntimeException("Database exception123");
   }
 }

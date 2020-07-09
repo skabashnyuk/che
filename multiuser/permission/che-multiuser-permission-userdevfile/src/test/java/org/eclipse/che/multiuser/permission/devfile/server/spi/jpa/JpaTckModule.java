@@ -102,11 +102,8 @@ public class JpaTckModule extends TckModule {
         .toInstance(new JpaTckRepository<>(UserDevfilePermission.class));
     bind(new TypeLiteral<TckRepository<UserImpl>>() {})
         .toInstance(new JpaTckRepository<>(UserImpl.class));
-    bind(new TypeLiteral<TckRepository<AccountImpl>>() {})
-        .toInstance(new JpaTckRepository<>(AccountImpl.class));
-
-    bind(new TypeLiteral<TckRepository<WorkspaceImpl>>() {})
-        .toInstance(new JpaTckRepository<>(WorkspaceImpl.class));
+    bind(new TypeLiteral<TckRepository<UserDevfileImpl>>() {})
+        .toInstance(new JpaTckRepository<>(UserDevfileImpl.class));
 
     bind(SchemaInitializer.class)
         .toInstance(new FlywaySchemaInitializer(server.getDataSource(), "che-schema"));

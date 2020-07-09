@@ -52,7 +52,7 @@ public class JpaUserDevfilePermissionDao
   public UserDevfilePermissionImpl get(String userId, String instanceId)
       throws ServerException, NotFoundException {
 
-    requireNonNull(instanceId, "Workspace identifier required");
+    requireNonNull(instanceId, "User devfile identifier required");
     requireNonNull(userId, "User identifier required");
     try {
       return new UserDevfilePermissionImpl(getEntity(wildcardToNull(userId), instanceId));
@@ -74,7 +74,7 @@ public class JpaUserDevfilePermissionDao
   @Transactional
   public Page<UserDevfilePermissionImpl> getByInstance(
       String instanceId, int maxItems, long skipCount) throws ServerException {
-    requireNonNull(instanceId, "Workspace identifier required");
+    requireNonNull(instanceId, "User devfile identifier required");
     checkArgument(
         skipCount <= Integer.MAX_VALUE,
         "The number of items to skip can't be greater than " + Integer.MAX_VALUE);
@@ -84,7 +84,7 @@ public class JpaUserDevfilePermissionDao
       final List<UserDevfilePermissionImpl> permissions =
           entityManager
               .createNamedQuery(
-                  "UserDevfilePermissions.getByUserDevfileId", UserDevfilePermissionImpl.class)
+                  "UserDevfilePermission.getByUserDevfileId", UserDevfilePermissionImpl.class)
               .setParameter("userDevfileId", instanceId)
               .setMaxResults(maxItems)
               .setFirstResult((int) skipCount)
@@ -94,7 +94,7 @@ public class JpaUserDevfilePermissionDao
               .collect(toList());
       final Long workersCount =
           entityManager
-              .createNamedQuery("UserDevfilePermissions.getCountByUserDevfileId", Long.class)
+              .createNamedQuery("UserDevfilePermission.getCountByUserDevfileId", Long.class)
               .setParameter("userDevfileId", instanceId)
               .getSingleResult();
       return new Page<>(permissions, skipCount, maxItems, workersCount);
@@ -110,7 +110,9 @@ public class JpaUserDevfilePermissionDao
       return doGet(userId, instanceId);
     } catch (NoResultException e) {
       throw new NotFoundException(
-          format("Worker of workspace '%s' with id '%s' was not found.", instanceId, userId));
+          format(
+              "User devfile permission for devfile '%s' with id '%s' was not found.",
+              instanceId, userId));
     } catch (RuntimeException e) {
       throw new ServerException(e.getMessage(), e);
     }
@@ -149,8 +151,8 @@ public class JpaUserDevfilePermissionDao
     return managerProvider
         .get()
         .createNamedQuery(
-            "UserDevfilePermissions.getByUserAndUserDevfileId", UserDevfilePermissionImpl.class)
-        .setParameter("workspaceId", instanceId)
+            "UserDevfilePermission.getByUserAndUserDevfileId", UserDevfilePermissionImpl.class)
+        .setParameter("userDevfileId", instanceId)
         .setParameter("userId", userId)
         .getSingleResult();
   }
@@ -161,7 +163,7 @@ public class JpaUserDevfilePermissionDao
     try {
       return managerProvider
           .get()
-          .createNamedQuery("UserDevfilePermissions.getByUserId", UserDevfilePermissionImpl.class)
+          .createNamedQuery("UserDevfilePermission.getByUserId", UserDevfilePermissionImpl.class)
           .setParameter("userId", userId)
           .getResultList();
     } catch (RuntimeException e) {
