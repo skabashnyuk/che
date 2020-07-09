@@ -11,18 +11,13 @@
  */
 package org.eclipse.che.multiuser.permission.devfile.server.spi.jpa;
 
-import static org.testng.AssertJUnit.assertEquals;
-
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import java.util.Arrays;
-import java.util.stream.Stream;
-import javax.persistence.EntityManager;
-import org.eclipse.che.account.shared.model.Account;
 import org.eclipse.che.account.spi.AccountImpl;
+import org.eclipse.che.api.devfile.server.jpa.JpaUserDevfileDao;
+import org.eclipse.che.api.devfile.server.model.impl.UserDevfileImpl;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.workspace.server.jpa.JpaWorkspaceDao;
-import org.eclipse.che.api.workspace.server.model.impl.WorkspaceConfigImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import org.eclipse.che.commons.test.tck.TckResourcesCleaner;
 import org.eclipse.che.multiuser.permission.devfile.server.model.impl.UserDevfilePermissionImpl;
@@ -33,6 +28,14 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.persistence.EntityManager;
+import java.util.Arrays;
+import java.util.stream.Stream;
+
+import static org.eclipse.che.commons.lang.NameGenerator.generate;
+import static org.eclipse.che.multiuser.permission.devfile.server.TestObjectGenerator.createDevfile;
+import static org.testng.AssertJUnit.assertEquals;
+
 /**
  * Tests for {@link RemoveUserDevfilePermissionsBeforeUserDevfuleRemovedEventSubscriber}
  *
@@ -42,18 +45,17 @@ public class RemoveUserDevfilePermissionsBeforeUserDevfileRemovedEventSubscriber
   private TckResourcesCleaner tckResourcesCleaner;
   private EntityManager manager;
   private JpaUserDevfilePermissionDao userDevfilePermissionsDao;
-  private JpaWorkspaceDao workspaceDao;
+  private JpaUserDevfileDao userDevfileDao;
 
   private RemoveUserDevfilePermissionsBeforeUserDevfuleRemovedEventSubscriber subscriber;
 
-  private WorkspaceImpl workspace;
+  private UserDevfileImpl userDevfile;
   private UserDevfilePermissionImpl[] userDevfilePermissions;
   private UserImpl[] users;
-  private Account account;
 
   @BeforeClass
   public void setupEntities() throws Exception {
-    account = new AccountImpl("account1", "accountName", "test");
+
 
     users =
         new UserImpl[] {
@@ -61,21 +63,20 @@ public class RemoveUserDevfilePermissionsBeforeUserDevfileRemovedEventSubscriber
           new UserImpl("user2", "user2@com.com", "usr2")
         };
 
-    workspace =
-        new WorkspaceImpl(
-            "ws1", account, new WorkspaceConfigImpl("", "", "cfg1", null, null, null, null));
+    userDevfile =
+            new UserDevfileImpl("devfile_id1", createDevfile(generate("name", 6)));
 
     userDevfilePermissions =
         new UserDevfilePermissionImpl[] {
-          new UserDevfilePermissionImpl("ws1", "user1", Arrays.asList("read", "use", "run")),
-          new UserDevfilePermissionImpl("ws1", "user2", Arrays.asList("read", "use"))
+          new UserDevfilePermissionImpl(userDevfile.getId(), "user1", Arrays.asList("read", "use", "run")),
+          new UserDevfilePermissionImpl(userDevfile.getId(), "user2", Arrays.asList("read", "use"))
         };
 
     Injector injector = Guice.createInjector(new JpaTckModule());
 
     manager = injector.getInstance(EntityManager.class);
     userDevfilePermissionsDao = injector.getInstance(JpaUserDevfilePermissionDao.class);
-    workspaceDao = injector.getInstance(JpaWorkspaceDao.class);
+    userDevfileDao = injector.getInstance(JpaUserDevfileDao.class);
     subscriber =
         injector.getInstance(
             RemoveUserDevfilePermissionsBeforeUserDevfuleRemovedEventSubscriber.class);
@@ -86,8 +87,7 @@ public class RemoveUserDevfilePermissionsBeforeUserDevfileRemovedEventSubscriber
   @BeforeMethod
   public void setUp() throws Exception {
     manager.getTransaction().begin();
-    manager.persist(account);
-    manager.persist(workspace);
+    manager.persist(userDevfile);
     Stream.of(users).forEach(manager::persist);
     Stream.of(userDevfilePermissions).forEach(manager::persist);
     manager.getTransaction().commit();
@@ -99,12 +99,12 @@ public class RemoveUserDevfilePermissionsBeforeUserDevfileRemovedEventSubscriber
     manager.getTransaction().begin();
 
     manager
-        .createQuery("SELECT e FROM Worker e", UserDevfilePermissionImpl.class)
+        .createQuery("SELECT e FROM UserDevfilePermission e", UserDevfilePermissionImpl.class)
         .getResultList()
         .forEach(manager::remove);
 
     manager
-        .createQuery("SELECT w FROM Workspace w", WorkspaceImpl.class)
+        .createQuery("SELECT w FROM UserDevfile w", UserDevfileImpl.class)
         .getResultList()
         .forEach(manager::remove);
 
@@ -113,10 +113,7 @@ public class RemoveUserDevfilePermissionsBeforeUserDevfileRemovedEventSubscriber
         .getResultList()
         .forEach(manager::remove);
 
-    manager
-        .createQuery("SELECT a FROM Account a", AccountImpl.class)
-        .getResultList()
-        .forEach(manager::remove);
+
     manager.getTransaction().commit();
   }
 
@@ -127,23 +124,23 @@ public class RemoveUserDevfilePermissionsBeforeUserDevfileRemovedEventSubscriber
   }
 
   @Test
-  public void shouldRemoveAllWorkersWhenWorkspaceIsRemoved() throws Exception {
-    workspaceDao.remove(workspace.getId());
+  public void shouldRemoveAllPermissionsWhenUserDevfileIsRemoved() throws Exception {
+    userDevfileDao.remove(userDevfile.getId());
 
     assertEquals(
         userDevfilePermissionsDao
-            .getUserDevfilePermission(workspace.getId(), 1, 0)
+            .getUserDevfilePermission(userDevfile.getId(), 1, 0)
             .getTotalItemsCount(),
         0);
   }
 
   @Test
-  public void shouldRemoveAllWorkersWhenPageSizeEqualsToOne() throws Exception {
-    subscriber.removeWorkers(workspace.getId(), 1);
+  public void shouldRemoveAllPermissionsWhenPageSizeEqualsToOne() throws Exception {
+    subscriber.removeUserDevfilePermissions(userDevfile.getId(), 1);
 
     assertEquals(
         userDevfilePermissionsDao
-            .getUserDevfilePermission(workspace.getId(), 1, 0)
+            .getUserDevfilePermission(userDevfile.getId(), 1, 0)
             .getTotalItemsCount(),
         0);
   }

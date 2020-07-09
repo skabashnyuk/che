@@ -191,17 +191,17 @@ public class JpaUserDevfilePermissionDao
 
     @Override
     public void onCascadeEvent(BeforeDevfileRemovedEvent event) throws Exception {
-      removeWorkers(event.getUserDevfile().getId(), PAGE_SIZE);
+      removeUserDevfilePermissions(event.getUserDevfile().getId(), PAGE_SIZE);
     }
 
     @VisibleForTesting
-    void removeWorkers(String workspaceId, int pageSize) throws ServerException {
+    void removeUserDevfilePermissions(String userDevfileId, int pageSize) throws ServerException {
       Page<UserDevfilePermissionImpl> permissionsPage;
       do {
         // skip count always equals to 0 because elements will be shifted after removing previous
         // items
         permissionsPage =
-            userDevfilePermissionDao.getUserDevfilePermission(workspaceId, pageSize, 0);
+            userDevfilePermissionDao.getUserDevfilePermission(userDevfileId, pageSize, 0);
         for (UserDevfilePermissionImpl permission : permissionsPage.getItems()) {
           userDevfilePermissionDao.removeUserDevfilePermission(
               permission.getInstanceId(), permission.getUserId());
