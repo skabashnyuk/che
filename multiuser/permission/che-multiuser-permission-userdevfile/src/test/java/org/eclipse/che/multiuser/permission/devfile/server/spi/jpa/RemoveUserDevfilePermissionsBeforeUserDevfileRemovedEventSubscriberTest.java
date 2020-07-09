@@ -11,14 +11,18 @@
  */
 package org.eclipse.che.multiuser.permission.devfile.server.spi.jpa;
 
+import static org.eclipse.che.commons.lang.NameGenerator.generate;
+import static org.eclipse.che.multiuser.permission.devfile.server.TestObjectGenerator.createDevfile;
+import static org.testng.AssertJUnit.assertEquals;
+
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.eclipse.che.account.spi.AccountImpl;
+import java.util.Arrays;
+import java.util.stream.Stream;
+import javax.persistence.EntityManager;
 import org.eclipse.che.api.devfile.server.jpa.JpaUserDevfileDao;
 import org.eclipse.che.api.devfile.server.model.impl.UserDevfileImpl;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
-import org.eclipse.che.api.workspace.server.jpa.JpaWorkspaceDao;
-import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import org.eclipse.che.commons.test.tck.TckResourcesCleaner;
 import org.eclipse.che.multiuser.permission.devfile.server.model.impl.UserDevfilePermissionImpl;
 import org.eclipse.che.multiuser.permission.devfile.server.spi.jpa.JpaUserDevfilePermissionDao.RemoveUserDevfilePermissionsBeforeUserDevfuleRemovedEventSubscriber;
@@ -27,14 +31,6 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import javax.persistence.EntityManager;
-import java.util.Arrays;
-import java.util.stream.Stream;
-
-import static org.eclipse.che.commons.lang.NameGenerator.generate;
-import static org.eclipse.che.multiuser.permission.devfile.server.TestObjectGenerator.createDevfile;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Tests for {@link RemoveUserDevfilePermissionsBeforeUserDevfuleRemovedEventSubscriber}
@@ -56,19 +52,18 @@ public class RemoveUserDevfilePermissionsBeforeUserDevfileRemovedEventSubscriber
   @BeforeClass
   public void setupEntities() throws Exception {
 
-
     users =
         new UserImpl[] {
           new UserImpl("user1", "user1@com.com", "usr1"),
           new UserImpl("user2", "user2@com.com", "usr2")
         };
 
-    userDevfile =
-            new UserDevfileImpl("devfile_id1", createDevfile(generate("name", 6)));
+    userDevfile = new UserDevfileImpl("devfile_id1", createDevfile(generate("name", 6)));
 
     userDevfilePermissions =
         new UserDevfilePermissionImpl[] {
-          new UserDevfilePermissionImpl(userDevfile.getId(), "user1", Arrays.asList("read", "use", "run")),
+          new UserDevfilePermissionImpl(
+              userDevfile.getId(), "user1", Arrays.asList("read", "use", "run")),
           new UserDevfilePermissionImpl(userDevfile.getId(), "user2", Arrays.asList("read", "use"))
         };
 
@@ -112,7 +107,6 @@ public class RemoveUserDevfilePermissionsBeforeUserDevfileRemovedEventSubscriber
         .createQuery("SELECT u FROM Usr u", UserImpl.class)
         .getResultList()
         .forEach(manager::remove);
-
 
     manager.getTransaction().commit();
   }
