@@ -11,9 +11,37 @@
  */
 package org.eclipse.che.multiuser.permission.devfile.server.filters;
 
+import static com.jayway.restassured.RestAssured.given;
+import static org.everrest.assured.JettyHttpServer.ADMIN_USER_NAME;
+import static org.everrest.assured.JettyHttpServer.ADMIN_USER_PASSWORD;
+import static org.everrest.assured.JettyHttpServer.SECURE_PATH;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.spy;
+import static org.testng.Assert.assertEquals;
+
+import com.jayway.restassured.response.Response;
+import org.eclipse.che.api.core.ForbiddenException;
+import org.eclipse.che.api.core.rest.ApiExceptionMapper;
+import org.eclipse.che.api.devfile.server.UserDevfileManager;
+import org.eclipse.che.api.devfile.server.UserDevfileService;
+import org.eclipse.che.api.devfile.server.model.impl.UserDevfileImpl;
+import org.eclipse.che.api.devfile.shared.dto.UserDevfileDto;
+import org.eclipse.che.commons.env.EnvironmentContext;
+import org.eclipse.che.commons.subject.Subject;
+import org.eclipse.che.multiuser.permission.devfile.server.TestObjectGenerator;
 import org.everrest.assured.EverrestJetty;
+import org.everrest.core.Filter;
+import org.everrest.core.GenericContainerRequest;
+import org.everrest.core.RequestFilter;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.testng.MockitoTestNGListener;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
+import org.testng.annotations.Test;
 
 /**
  * Tests for {@link UserDevfilePermissionsFilter}.
@@ -22,22 +50,24 @@ import org.testng.annotations.Listeners;
  */
 @Listeners(value = {EverrestJetty.class, MockitoTestNGListener.class})
 public class UserDevfilePermissionsFilterTest {
-  //  private static final String USERNAME = "userok";
-  //  private static final String TEST_ACCOUNT_TYPE = "test";
-  //
-  //  @SuppressWarnings("unused")
-  //  private static final ApiExceptionMapper MAPPER = new ApiExceptionMapper();
-  //
-  //  @SuppressWarnings("unused")
-  //  private static final EnvironmentFilter FILTER = new EnvironmentFilter();
-  //
-  //  @Mock private static Subject subject;
-  //
-  //  @Mock private WorkspaceManager workspaceManager;
-  //
-  //  @Mock private SuperPrivilegesChecker superPrivilegesChecker;
-  //
-  //  private UserDevfilePermissionsFilter permissionsFilter;
+  private static final String USERNAME = "userok";
+  // private static final String TEST_ACCOUNT_TYPE = "test";
+
+  @SuppressWarnings("unused")
+  private static final ApiExceptionMapper MAPPER = new ApiExceptionMapper();
+
+  @SuppressWarnings("unused")
+  private static final EnvironmentFilter FILTER = new EnvironmentFilter();
+
+  @Mock private static Subject subject;
+
+  @Mock private UserDevfileManager userDevfileManager;
+
+  private UserDevfilePermissionsFilter permissionsFilter;
+
+  @Mock private UserDevfileService devfileService;
+  private UserDevfileDto userDevfileDto = TestObjectGenerator.createUserDevfileDto();
+  private UserDevfileImpl userDevfile = new UserDevfileImpl(userDevfileDto);
   //
   //  @Mock private AccountManager accountManager;
   //
@@ -49,29 +79,19 @@ public class UserDevfilePermissionsFilterTest {
   //
   //  @Mock private WorkspaceImpl workspace;
   //
-  //  @BeforeMethod
-  //  public void setUp() throws Exception {
-  //    lenient().when(subject.getUserName()).thenReturn(USERNAME);
-  //    lenient().when(workspaceManager.getWorkspace(any())).thenReturn(workspace);
-  //    lenient().when(workspace.getNamespace()).thenReturn("namespace");
-  //    lenient().when(workspace.getId()).thenReturn("workspace123");
-  //
-  //    lenient().when(accountManager.getByName(any())).thenReturn(account);
-  //    lenient().when(account.getType()).thenReturn(TEST_ACCOUNT_TYPE);
-  //
-  //    permissionsFilter =
-  //        spy(
-  //            new WorkspacePermissionsFilter(
-  //                workspaceManager,
-  //                accountManager,
-  //                ImmutableSet.of(accountPermissionsChecker),
-  //                superPrivilegesChecker));
-  //
-  //    lenient()
-  //        .doThrow(new ForbiddenException(""))
-  //        .when(permissionsFilter)
-  //        .checkAccountPermissions(anyString(), any());
-  //  }
+  @BeforeMethod
+  public void setUp() throws Exception {
+    lenient().when(subject.getUserName()).thenReturn(USERNAME);
+    lenient().when(userDevfileManager.getById(any())).thenReturn(userDevfile);
+    // lenient().when(userDevfile.getId()).thenReturn(userDevfileDto.getId());
+
+    permissionsFilter = spy(new UserDevfilePermissionsFilter(userDevfileManager));
+
+    lenient()
+        .doThrow(new ForbiddenException(""))
+        .when(subject)
+        .checkPermission(anyString(), anyString(), anyString());
+  }
   //
   //  @Test
   //  public void shouldCheckAccountPermissionsAccessOnWorkspaceCreationFromConfig() throws
@@ -117,6 +137,27 @@ public class UserDevfilePermissionsFilterTest {
   //    verifyZeroInteractions(subject);
   //  }
   //
+  @Test
+  public void shouldCheckReadPermissionsOnFetchingUserDevfileById() throws Exception {
+    // given
+    Mockito.when(devfileService.getById(eq(userDevfileDto.getId()))).thenReturn(userDevfileDto);
+    // when
+
+    final Response response =
+        given()
+            .auth()
+            .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
+            .contentType("application/json")
+            .when()
+            .get(SECURE_PATH + "/userdevfile/" + userDevfileDto.getId());
+    assertEquals(response.getStatusCode(), 200);
+    //    verify(superPrivilegesChecker).hasSuperPrivileges();
+    Mockito.verify(devfileService).getById(eq(userDevfileDto.getId()));
+    //    verify(permissionsFilter).checkAccountPermissions("userok",
+    // AccountOperation.MANAGE_WORKSPACES);
+    //    verifyZeroInteractions(subject);
+  }
+
   //  @Test
   //  public void shouldCheckAccountPermissionsOnFetchingWorkspacesByNamespace() throws Exception {
   //    when(superPrivilegesChecker.hasSuperPrivileges()).thenReturn(false);
@@ -321,7 +362,7 @@ public class UserDevfilePermissionsFilterTest {
   //
   //    WorkspaceImpl workspace = mock(WorkspaceImpl.class);
   //    when(workspace.getId()).thenReturn("workspace123");
-  //    when(workspaceManager.getWorkspace("myWorkspace", "userok")).thenReturn(workspace);
+  //    when(userDevfileManager.getWorkspace("myWorkspace", "userok")).thenReturn(workspace);
   //
   //    final Response response =
   //        given()
@@ -628,10 +669,10 @@ public class UserDevfilePermissionsFilterTest {
   //    return DtoFactory.getInstance().createDtoFromJson(response.body().print(), dtoClass);
   //  }
   //
-  //  @Filter
-  //  public static class EnvironmentFilter implements RequestFilter {
-  //    public void doFilter(GenericContainerRequest request) {
-  //      EnvironmentContext.getCurrent().setSubject(subject);
-  //    }
-  //  }
+  @Filter
+  public static class EnvironmentFilter implements RequestFilter {
+    public void doFilter(GenericContainerRequest request) {
+      EnvironmentContext.getCurrent().setSubject(subject);
+    }
+  }
 }

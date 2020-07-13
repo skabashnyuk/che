@@ -18,6 +18,7 @@ import static java.util.Collections.singletonMap;
 import static java.util.stream.Collectors.toList;
 import static org.eclipse.che.api.devfile.server.TestObjectGenerator.createUserDevfile;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -32,6 +33,8 @@ import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.Page;
 import org.eclipse.che.api.core.ServerException;
+import org.eclipse.che.api.core.notification.EventService;
+import org.eclipse.che.api.devfile.server.event.BeforeDevfileRemovedEvent;
 import org.eclipse.che.api.devfile.server.model.impl.UserDevfileImpl;
 import org.eclipse.che.api.devfile.server.spi.UserDevfileDao;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
@@ -62,6 +65,8 @@ public class UserDevfileDaoTest {
 
   private UserDevfileImpl[] devfiles;
   private UserImpl[] users;
+
+  @Inject private EventService eventService;
 
   @Inject private UserDevfileDao userDevfileDaoDao;
 
@@ -343,6 +348,18 @@ public class UserDevfileDaoTest {
             ImmutableList.of(new Pair<>("devfile.metadata.name", "asc")));
     // then
     assertEquals(result.getItems().stream().toArray(UserDevfileImpl[]::new), expected);
+  }
+
+  @Test
+  public void shouldSendDevfileDeletedEventOnRemoveUserDevfile() throws Exception {
+    // given
+    final String userDevfileId = devfiles[0].getId();
+    final boolean[] isNotified = new boolean[] {false};
+    eventService.subscribe(event -> isNotified[0] = true, BeforeDevfileRemovedEvent.class);
+    // when
+    userDevfileDaoDao.remove(userDevfileId);
+    // then
+    assertTrue(isNotified[0], "Event subscriber notified");
   }
 
   @Test(dataProvider = "boundsdataprovider")

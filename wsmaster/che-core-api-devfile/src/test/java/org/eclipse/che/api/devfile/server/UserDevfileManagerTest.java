@@ -148,17 +148,6 @@ public class UserDevfileManagerTest {
   }
 
   @Test
-  public void shouldSendDevfileDeletedEventOnRemoveUserDevfile() throws Exception {
-    // given
-    final UserDevfileImpl userDevfile = createUserDevfile();
-    // when
-    userDevfileManager.removeUserDevfile(userDevfile.getId());
-    // then
-    verify(eventService).publish(devfileDeletedEventCaptor.capture());
-    assertEquals(userDevfile.getId(), devfileDeletedEventCaptor.getValue().getId());
-  }
-
-  @Test
   public void shouldSendDevfileUpdatedEventOnUpdateDevfile() throws Exception {
     // given
     final UserDevfileImpl userDevfile = createUserDevfile();

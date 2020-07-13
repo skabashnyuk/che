@@ -13,6 +13,9 @@ package org.eclipse.che.multiuser.permission.devfile.server.jpa;
 
 import static org.eclipse.che.commons.lang.NameGenerator.generate;
 import static org.eclipse.che.multiuser.permission.devfile.server.TestObjectGenerator.createDevfile;
+import static org.eclipse.che.multiuser.permission.devfile.server.UserDevfileDomain.DELETE;
+import static org.eclipse.che.multiuser.permission.devfile.server.UserDevfileDomain.READ;
+import static org.eclipse.che.multiuser.permission.devfile.server.UserDevfileDomain.UPDATE;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -50,10 +53,11 @@ public class MultiuserJpaUserDevfileDaoTest {
     permissions =
         ImmutableList.of(
             new UserDevfilePermissionImpl(
-                "devfile_id1", "user1", Arrays.asList("read", "use", "search")),
-            new UserDevfilePermissionImpl("devfile_id2", "user1", Arrays.asList("read", "search")),
-            new UserDevfilePermissionImpl("devfile_id3", "user1", Arrays.asList("none", "run")),
-            new UserDevfilePermissionImpl("devfile_id1", "user2", Arrays.asList("read", "use")));
+                "devfile_id1", "user1", Arrays.asList(READ, DELETE, UPDATE)),
+            new UserDevfilePermissionImpl("devfile_id2", "user1", Arrays.asList(READ, UPDATE)),
+            new UserDevfilePermissionImpl("devfile_id3", "user1", Arrays.asList(DELETE, UPDATE)),
+            new UserDevfilePermissionImpl(
+                "devfile_id1", "user2", Arrays.asList(READ, DELETE, UPDATE)));
 
     users =
         ImmutableList.of(
@@ -75,9 +79,9 @@ public class MultiuserJpaUserDevfileDaoTest {
   public void setUp() throws Exception {
     manager.getTransaction().begin();
 
-    users.forEach(manager::persist);
-    userDevfiles.forEach(manager::persist);
-    permissions.forEach(manager::persist);
+    users.stream().map(UserImpl::new).forEach(manager::persist);
+    userDevfiles.stream().map(UserDevfileImpl::new).forEach(manager::persist);
+    permissions.stream().map(UserDevfilePermissionImpl::new).forEach(manager::persist);
 
     manager.getTransaction().commit();
     manager.clear();
