@@ -47,16 +47,15 @@ public class UserDevfilePermissionsFilter extends CheMethodInvokerFilter {
   public void filter(GenericResourceMethod genericResourceMethod, Object[] arguments)
       throws ForbiddenException {
     final String methodName = genericResourceMethod.getMethod().getName();
-    final String arg0 = ((String) arguments[0]);
     switch (methodName) {
       case "getById":
-        doCheckPermission(DOMAIN_ID, arg0, READ);
+        doCheckPermission(DOMAIN_ID, ((String) arguments[0]), READ);
         break;
       case "update":
-        doCheckPermission(DOMAIN_ID, arg0, UPDATE);
+        doCheckPermission(DOMAIN_ID, ((String) arguments[0]), UPDATE);
         break;
       case "delete":
-        doCheckPermission(DOMAIN_ID, arg0, DELETE);
+        doCheckPermission(DOMAIN_ID, ((String) arguments[0]), DELETE);
         break;
       case "create":
       case "getUserDevfiles":

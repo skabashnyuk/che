@@ -19,18 +19,31 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.testng.Assert.assertEquals;
 
 import com.jayway.restassured.response.Response;
+import java.util.Collections;
+import java.util.HashSet;
+import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.core.ForbiddenException;
+import org.eclipse.che.api.core.NotFoundException;
+import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.rest.ApiExceptionMapper;
+import org.eclipse.che.api.core.rest.CheJsonProvider;
 import org.eclipse.che.api.devfile.server.UserDevfileManager;
 import org.eclipse.che.api.devfile.server.UserDevfileService;
 import org.eclipse.che.api.devfile.server.model.impl.UserDevfileImpl;
 import org.eclipse.che.api.devfile.shared.dto.UserDevfileDto;
+import org.eclipse.che.api.workspace.server.devfile.DevfileEntityProvider;
+import org.eclipse.che.api.workspace.server.devfile.DevfileParser;
+import org.eclipse.che.api.workspace.server.devfile.schema.DevfileSchemaProvider;
+import org.eclipse.che.api.workspace.server.devfile.validator.DevfileIntegrityValidator;
+import org.eclipse.che.api.workspace.server.devfile.validator.DevfileSchemaValidator;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.multiuser.permission.devfile.server.TestObjectGenerator;
@@ -55,8 +68,14 @@ import org.testng.annotations.Test;
 public class UserDevfilePermissionsFilterTest {
   private static final String USERNAME = "userok";
 
-  @SuppressWarnings("unused")
-  private static final ApiExceptionMapper MAPPER = new ApiExceptionMapper();
+  ApiExceptionMapper mapper;
+
+  CheJsonProvider jsonProvider = new CheJsonProvider(new HashSet<>());
+  private DevfileEntityProvider devfileEntityProvider =
+      new DevfileEntityProvider(
+          new DevfileParser(
+              new DevfileSchemaValidator(new DevfileSchemaProvider()),
+              new DevfileIntegrityValidator(Collections.emptyMap())));
 
   @SuppressWarnings("unused")
   private static final EnvironmentFilter FILTER = new EnvironmentFilter();
@@ -83,51 +102,42 @@ public class UserDevfilePermissionsFilterTest {
         .when(subject)
         .checkPermission(anyString(), anyString(), anyString());
   }
-  //
-  //  @Test
-  //  public void shouldCheckAccountPermissionsAccessOnWorkspaceCreationFromConfig() throws
-  // Exception {
-  //    doNothing().when(permissionsFilter).checkAccountPermissions(anyString(), any());
-  //
-  //    final Response response =
-  //        given()
-  //            .auth()
-  //            .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
-  //            .contentType("application/json")
-  //            .body(DtoFactory.newDto(WorkspaceConfigDto.class))
-  //            .when()
-  //            .post(SECURE_PATH + "/workspace?namespace=userok");
-  //
-  //    assertEquals(response.getStatusCode(), 204);
-  //    verify(workspaceService)
-  //        .create(any(WorkspaceConfigDto.class), any(), any(), any(), eq("userok"));
-  //    verify(permissionsFilter).checkAccountPermissions("userok",
-  // AccountOperation.CREATE_WORKSPACE);
-  //    verifyZeroInteractions(subject);
-  //  }
-  //
-  //  @Test
-  //  public void shouldCheckAccountPermissionsAccessOnWorkspaceCreationFromDevfile() throws
-  // Exception {
-  //    doNothing().when(permissionsFilter).checkAccountPermissions(anyString(), any());
-  //
-  //    final Response response =
-  //        given()
-  //            .auth()
-  //            .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
-  //            .contentType("application/json")
-  //            .body(DtoFactory.newDto(DevfileDto.class))
-  //            .when()
-  //            .post(SECURE_PATH + "/workspace/devfile?namespace=userok");
-  //
-  //    assertEquals(response.getStatusCode(), 204);
-  //    verify(workspaceService)
-  //        .create(any(DevfileDto.class), any(), any(), any(), eq("userok"), any());
-  //    verify(permissionsFilter).checkAccountPermissions("userok",
-  // AccountOperation.CREATE_WORKSPACE);
-  //    verifyZeroInteractions(subject);
-  //  }
-  //
+
+  @Test
+  public void shouldNotCheckAnyPermissionOnDevfileCreate() {
+    // given
+    // when
+    final Response response =
+        given()
+            .auth()
+            .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
+            .contentType("application/json")
+            .body(userDevfileDto)
+            .when()
+            .post(SECURE_PATH + "/userdevfile/");
+    // then
+    assertEquals(response.getStatusCode(), 204);
+    verifyZeroInteractions(subject);
+  }
+
+  @Test
+  public void shouldNotCheckAnyPermissionOnDevfileSearch()
+      throws BadRequestException, ForbiddenException, NotFoundException, ServerException {
+    // given
+    Mockito.when(devfileService.getUserDevfiles(any(), any(), any()))
+        .thenReturn(javax.ws.rs.core.Response.ok().build());
+    // when
+    final Response response =
+        given()
+            .auth()
+            .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
+            .when()
+            .get(SECURE_PATH + "/userdevfile/");
+    // then
+    assertEquals(response.getStatusCode(), 200);
+    verifyZeroInteractions(subject);
+  }
+
   @Test
   public void shouldCheckReadPermissionsOnFetchingUserDevfileById() throws Exception {
     // given
@@ -157,50 +167,136 @@ public class UserDevfilePermissionsFilterTest {
             eq(UserDevfileDomain.READ));
   }
 
-  //  @Test
-  //  public void shouldCheckAccountPermissionsOnFetchingWorkspacesByNamespace() throws Exception {
-  //    when(superPrivilegesChecker.hasSuperPrivileges()).thenReturn(false);
-  //    doNothing().when(permissionsFilter).checkAccountPermissions(anyString(), any());
-  //
-  //    final Response response =
-  //        given()
-  //            .auth()
-  //            .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
-  //            .contentType("application/json")
-  //            .when()
-  //            .get(SECURE_PATH + "/workspace/namespace/userok");
-  //
-  //    assertEquals(response.getStatusCode(), 200);
-  //    verify(superPrivilegesChecker).hasSuperPrivileges();
-  //    verify(workspaceService).getByNamespace(any(), eq("userok"));
-  //    verify(permissionsFilter).checkAccountPermissions("userok",
-  // AccountOperation.MANAGE_WORKSPACES);
-  //    verifyZeroInteractions(subject);
-  //  }
-  //
-  //  @Test
-  //  public void
-  //      shouldNotCheckAccountPermissionsIfUserHasSuperPrivilegesOnFetchingWorkspacesByNamespace()
-  //          throws Exception {
-  //    when(superPrivilegesChecker.hasSuperPrivileges()).thenReturn(true);
-  //    doNothing().when(permissionsFilter).checkAccountPermissions(anyString(), any());
-  //
-  //    final Response response =
-  //        given()
-  //            .auth()
-  //            .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
-  //            .contentType("application/json")
-  //            .when()
-  //            .get(SECURE_PATH + "/workspace/namespace/userok");
-  //
-  //    assertEquals(response.getStatusCode(), 200);
-  //    verify(superPrivilegesChecker).hasSuperPrivileges();
-  //    verify(workspaceService).getByNamespace(any(), eq("userok"));
-  //    verify(permissionsFilter, never())
-  //        .checkAccountPermissions("userok", AccountOperation.MANAGE_WORKSPACES);
-  //    verifyZeroInteractions(subject);
-  //  }
-  //
+  @Test
+  public void shouldBeAbleToFailOnCheckPermissionDevfileReadByID() throws ForbiddenException {
+    // given
+    doThrow(new ForbiddenException("forbidden"))
+        .when(subject)
+        .checkPermission(
+            eq(UserDevfileDomain.DOMAIN_ID),
+            eq(userDevfileDto.getId()),
+            eq(UserDevfileDomain.READ));
+    // when
+    final Response response =
+        given()
+            .auth()
+            .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
+            .when()
+            .get(SECURE_PATH + "/userdevfile/" + userDevfileDto.getId());
+    // then
+    assertEquals(response.getStatusCode(), 403);
+    verify(permissionsFilter)
+        .doCheckPermission(
+            eq(UserDevfileDomain.DOMAIN_ID),
+            eq(userDevfileDto.getId()),
+            eq(UserDevfileDomain.READ));
+  }
+
+  @Test
+  public void shouldChecksPermissionDevfileUpdate() throws ForbiddenException {
+    // given
+    doNothing()
+        .when(subject)
+        .checkPermission(
+            eq(UserDevfileDomain.DOMAIN_ID),
+            eq(userDevfileDto.getId()),
+            eq(UserDevfileDomain.UPDATE));
+    // when
+    final Response response =
+        given()
+            .auth()
+            .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
+            .contentType("application/json")
+            .body(userDevfileDto)
+            .when()
+            .put(SECURE_PATH + "/userdevfile/" + userDevfileDto.getId());
+    // then
+    assertEquals(response.getStatusCode(), 204);
+    verify(permissionsFilter)
+        .doCheckPermission(
+            eq(UserDevfileDomain.DOMAIN_ID),
+            eq(userDevfileDto.getId()),
+            eq(UserDevfileDomain.UPDATE));
+  }
+
+  @Test
+  public void shouldBeAbleToFailOnCheckPermissionDevfileUpdate() throws ForbiddenException {
+    // given
+    doThrow(new ForbiddenException("forbidden"))
+        .when(subject)
+        .checkPermission(
+            eq(UserDevfileDomain.DOMAIN_ID),
+            eq(userDevfileDto.getId()),
+            eq(UserDevfileDomain.UPDATE));
+    // when
+    final Response response =
+        given()
+            .auth()
+            .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
+            .contentType("application/json")
+            .body(userDevfileDto)
+            .when()
+            .put(SECURE_PATH + "/userdevfile/" + userDevfileDto.getId());
+    // then
+    assertEquals(response.getStatusCode(), 403);
+    verify(permissionsFilter)
+        .doCheckPermission(
+            eq(UserDevfileDomain.DOMAIN_ID),
+            eq(userDevfileDto.getId()),
+            eq(UserDevfileDomain.UPDATE));
+  }
+
+  @Test
+  public void shouldChecksPermissionDevfileDelete() throws ForbiddenException {
+    // given
+    doNothing()
+        .when(subject)
+        .checkPermission(
+            eq(UserDevfileDomain.DOMAIN_ID),
+            eq(userDevfileDto.getId()),
+            eq(UserDevfileDomain.DELETE));
+    // when
+    final Response response =
+        given()
+            .auth()
+            .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
+            .when()
+            .delete(SECURE_PATH + "/userdevfile/" + userDevfileDto.getId());
+    // then
+    assertEquals(response.getStatusCode(), 204);
+    verify(permissionsFilter)
+        .doCheckPermission(
+            eq(UserDevfileDomain.DOMAIN_ID),
+            eq(userDevfileDto.getId()),
+            eq(UserDevfileDomain.DELETE));
+  }
+
+  @Test
+  public void shouldBeAbleToFailOnCheckPermissionDevfileDelete() throws ForbiddenException {
+    // given
+    doThrow(new ForbiddenException("forbidden"))
+        .when(subject)
+        .checkPermission(
+            eq(UserDevfileDomain.DOMAIN_ID),
+            eq(userDevfileDto.getId()),
+            eq(UserDevfileDomain.DELETE));
+    // when
+    final Response response =
+        given()
+            .auth()
+            .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
+            .when()
+            .delete(SECURE_PATH + "/userdevfile/" + userDevfileDto.getId());
+
+    // then
+    assertEquals(response.getStatusCode(), 403);
+    verify(permissionsFilter)
+        .doCheckPermission(
+            eq(UserDevfileDomain.DOMAIN_ID),
+            eq(userDevfileDto.getId()),
+            eq(UserDevfileDomain.DELETE));
+  }
+
   //  @Test
   //  public void shouldCheckAccountPermissionsOnStartingWorkspaceFromConfig() throws Exception {
   //    doNothing().when(permissionsFilter).checkAccountPermissions(anyString(), any());
