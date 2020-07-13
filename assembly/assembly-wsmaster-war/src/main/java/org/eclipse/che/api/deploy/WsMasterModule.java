@@ -345,6 +345,8 @@ public class WsMasterModule extends AbstractModule {
     install(
         new org.eclipse.che.multiuser.permission.workspace.server.jpa
             .MultiuserWorkspaceJpaModule());
+    install(
+        new org.eclipse.che.multiuser.permission.devfile.server.UserDevfileApiPermissionsModule());
     install(new org.eclipse.che.api.devfile.server.jpa.UserDevfileJpaModule());
     install(new MultiUserWorkspaceActivityModule());
 
