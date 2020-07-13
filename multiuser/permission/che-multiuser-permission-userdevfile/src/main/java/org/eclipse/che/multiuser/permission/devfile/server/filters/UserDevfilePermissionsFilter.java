@@ -11,15 +11,19 @@
  */
 package org.eclipse.che.multiuser.permission.devfile.server.filters;
 
+import static org.eclipse.che.multiuser.permission.devfile.server.UserDevfileDomain.DELETE;
+import static org.eclipse.che.multiuser.permission.devfile.server.UserDevfileDomain.DOMAIN_ID;
+import static org.eclipse.che.multiuser.permission.devfile.server.UserDevfileDomain.READ;
+import static org.eclipse.che.multiuser.permission.devfile.server.UserDevfileDomain.UPDATE;
+
+import com.google.common.annotations.VisibleForTesting;
 import javax.inject.Inject;
 import javax.ws.rs.Path;
 import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.devfile.server.UserDevfileManager;
 import org.eclipse.che.api.devfile.server.UserDevfileService;
 import org.eclipse.che.commons.env.EnvironmentContext;
-import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.everrest.CheMethodInvokerFilter;
-import org.eclipse.che.multiuser.permission.devfile.server.UserDevfileDomain;
 import org.everrest.core.Filter;
 import org.everrest.core.resource.GenericResourceMethod;
 
@@ -43,19 +47,16 @@ public class UserDevfilePermissionsFilter extends CheMethodInvokerFilter {
   public void filter(GenericResourceMethod genericResourceMethod, Object[] arguments)
       throws ForbiddenException {
     final String methodName = genericResourceMethod.getMethod().getName();
-    final Subject currentSubject = EnvironmentContext.getCurrent().getSubject();
+    final String arg0 = ((String) arguments[0]);
     switch (methodName) {
       case "getById":
-        currentSubject.checkPermission(
-            UserDevfileDomain.DOMAIN_ID, ((String) arguments[0]), UserDevfileDomain.READ);
+        doCheckPermission(DOMAIN_ID, arg0, READ);
         break;
       case "update":
-        currentSubject.checkPermission(
-            UserDevfileDomain.DOMAIN_ID, ((String) arguments[0]), UserDevfileDomain.UPDATE);
+        doCheckPermission(DOMAIN_ID, arg0, UPDATE);
         break;
       case "delete":
-        currentSubject.checkPermission(
-            UserDevfileDomain.DOMAIN_ID, ((String) arguments[0]), UserDevfileDomain.DELETE);
+        doCheckPermission(DOMAIN_ID, arg0, DELETE);
         break;
       case "create":
       case "getUserDevfiles":
@@ -63,5 +64,10 @@ public class UserDevfilePermissionsFilter extends CheMethodInvokerFilter {
       default:
         throw new ForbiddenException("The user does not have permission to perform this operation");
     }
+  }
+
+  @VisibleForTesting
+  void doCheckPermission(String domain, String instance, String action) throws ForbiddenException {
+    EnvironmentContext.getCurrent().getSubject().checkPermission(domain, instance, action);
   }
 }

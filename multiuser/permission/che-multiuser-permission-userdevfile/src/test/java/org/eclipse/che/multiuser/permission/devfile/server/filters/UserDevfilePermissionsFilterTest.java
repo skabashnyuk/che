@@ -18,8 +18,10 @@ import static org.everrest.assured.JettyHttpServer.SECURE_PATH;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.testng.Assert.assertEquals;
 
 import com.jayway.restassured.response.Response;
@@ -32,6 +34,7 @@ import org.eclipse.che.api.devfile.shared.dto.UserDevfileDto;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.multiuser.permission.devfile.server.TestObjectGenerator;
+import org.eclipse.che.multiuser.permission.devfile.server.UserDevfileDomain;
 import org.everrest.assured.EverrestJetty;
 import org.everrest.core.Filter;
 import org.everrest.core.GenericContainerRequest;
@@ -51,7 +54,6 @@ import org.testng.annotations.Test;
 @Listeners(value = {EverrestJetty.class, MockitoTestNGListener.class})
 public class UserDevfilePermissionsFilterTest {
   private static final String USERNAME = "userok";
-  // private static final String TEST_ACCOUNT_TYPE = "test";
 
   @SuppressWarnings("unused")
   private static final ApiExceptionMapper MAPPER = new ApiExceptionMapper();
@@ -69,21 +71,10 @@ public class UserDevfilePermissionsFilterTest {
   private UserDevfileDto userDevfileDto = TestObjectGenerator.createUserDevfileDto();
   private UserDevfileImpl userDevfile = new UserDevfileImpl(userDevfileDto);
   //
-  //  @Mock private AccountManager accountManager;
-  //
-  //  @Mock private AccountImpl account;
-  //
-  //  @Mock private WorkspaceService workspaceService;
-  //
-  //  @Mock private AccountPermissionsChecker accountPermissionsChecker;
-  //
-  //  @Mock private WorkspaceImpl workspace;
-  //
   @BeforeMethod
   public void setUp() throws Exception {
     lenient().when(subject.getUserName()).thenReturn(USERNAME);
     lenient().when(userDevfileManager.getById(any())).thenReturn(userDevfile);
-    // lenient().when(userDevfile.getId()).thenReturn(userDevfileDto.getId());
 
     permissionsFilter = spy(new UserDevfilePermissionsFilter(userDevfileManager));
 
@@ -141,8 +132,14 @@ public class UserDevfilePermissionsFilterTest {
   public void shouldCheckReadPermissionsOnFetchingUserDevfileById() throws Exception {
     // given
     Mockito.when(devfileService.getById(eq(userDevfileDto.getId()))).thenReturn(userDevfileDto);
-    // when
+    doNothing()
+        .when(subject)
+        .checkPermission(
+            eq(UserDevfileDomain.DOMAIN_ID),
+            eq(userDevfileDto.getId()),
+            eq(UserDevfileDomain.READ));
 
+    // when
     final Response response =
         given()
             .auth()
@@ -150,12 +147,14 @@ public class UserDevfilePermissionsFilterTest {
             .contentType("application/json")
             .when()
             .get(SECURE_PATH + "/userdevfile/" + userDevfileDto.getId());
+    // then
     assertEquals(response.getStatusCode(), 200);
-    //    verify(superPrivilegesChecker).hasSuperPrivileges();
-    Mockito.verify(devfileService).getById(eq(userDevfileDto.getId()));
-    //    verify(permissionsFilter).checkAccountPermissions("userok",
-    // AccountOperation.MANAGE_WORKSPACES);
-    //    verifyZeroInteractions(subject);
+    verify(devfileService).getById(eq(userDevfileDto.getId()));
+    verify(permissionsFilter)
+        .doCheckPermission(
+            eq(UserDevfileDomain.DOMAIN_ID),
+            eq(userDevfileDto.getId()),
+            eq(UserDevfileDomain.READ));
   }
 
   //  @Test

@@ -18,8 +18,7 @@ import org.eclipse.che.multiuser.api.permission.server.SuperPrivilegesChecker;
 import org.eclipse.che.multiuser.api.permission.shared.model.PermissionsDomain;
 import org.eclipse.che.multiuser.permission.devfile.server.filters.UserDevfilePermissionsFilter;
 
-/** @author Sergii Leschenko */
-public class WorkspaceApiPermissionsModule extends AbstractModule {
+public class UserDevfileApiPermissionsModule extends AbstractModule {
 
   @Override
   protected void configure() {

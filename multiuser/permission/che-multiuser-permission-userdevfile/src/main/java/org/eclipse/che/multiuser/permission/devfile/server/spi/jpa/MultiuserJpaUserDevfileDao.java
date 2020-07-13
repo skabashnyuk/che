@@ -81,11 +81,11 @@ public class MultiuserJpaUserDevfileDao implements UserDevfileDao {
   @Override
   public void remove(String id) throws ServerException {
     requireNonNull(id, "Required non-null id");
-    Optional<UserDevfileImpl> workspaceOpt;
+    Optional<UserDevfileImpl> devfileOpt;
     try {
-      workspaceOpt = doRemove(id);
-      workspaceOpt.ifPresent(
-          workspace -> eventService.publish(new DevfileDeletedEvent(workspace.getId())));
+      devfileOpt = doRemove(id);
+      devfileOpt.ifPresent(
+          devfile -> eventService.publish(new DevfileDeletedEvent(devfile.getId())));
     } catch (RuntimeException x) {
       throw new ServerException(x.getLocalizedMessage(), x);
     }
