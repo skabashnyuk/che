@@ -30,7 +30,6 @@ import org.eclipse.che.api.core.Page;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.devfile.server.event.BeforeDevfileRemovedEvent;
-import org.eclipse.che.api.user.server.event.BeforeUserRemovedEvent;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.core.db.cascade.CascadeEventSubscriber;
 import org.eclipse.che.multiuser.api.permission.server.AbstractPermissionsDomain;
@@ -207,32 +206,6 @@ public class JpaUserDevfilePermissionDao
               permission.getInstanceId(), permission.getUserId());
         }
       } while (permissionsPage.hasNextPage());
-    }
-  }
-
-  @Singleton
-  public static class RemoveUserDevfilePermissionsBeforeUserRemovedEventSubscriber
-      extends CascadeEventSubscriber<BeforeUserRemovedEvent> {
-    @Inject private EventService eventService;
-    @Inject private UserDevfilePermissionDao userDevfilePermissionDao;
-
-    @PostConstruct
-    public void subscribe() {
-      eventService.subscribe(this, BeforeUserRemovedEvent.class);
-    }
-
-    @PreDestroy
-    public void unsubscribe() {
-      eventService.unsubscribe(this, BeforeUserRemovedEvent.class);
-    }
-
-    @Override
-    public void onCascadeEvent(BeforeUserRemovedEvent event) throws Exception {
-      for (UserDevfilePermissionImpl permission :
-          userDevfilePermissionDao.getUserDevfilePermissionByUser(event.getUser().getId())) {
-        userDevfilePermissionDao.removeUserDevfilePermission(
-            permission.getInstanceId(), permission.getUserId());
-      }
     }
   }
 }

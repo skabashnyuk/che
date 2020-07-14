@@ -19,6 +19,7 @@ import org.eclipse.che.multiuser.api.permission.server.AbstractPermissionsDomain
 import org.eclipse.che.multiuser.api.permission.server.model.impl.AbstractPermissions;
 import org.eclipse.che.multiuser.api.permission.server.spi.PermissionsDao;
 import org.eclipse.che.multiuser.permission.devfile.server.UserDevfileDomain;
+import org.eclipse.che.multiuser.permission.devfile.server.listener.RemoveUserDevfileOnLastUserRemovedEventSubscriber;
 import org.eclipse.che.multiuser.permission.devfile.server.model.impl.UserDevfilePermissionImpl;
 import org.eclipse.che.multiuser.permission.devfile.server.spi.UserDevfilePermissionDao;
 import org.eclipse.che.multiuser.permission.devfile.server.spi.jpa.JpaUserDevfilePermissionDao;
@@ -33,6 +34,8 @@ public class MultiuserUserDevfileJpaModule extends AbstractModule {
     bind(JpaUserDevfilePermissionDao
             .RemoveUserDevfilePermissionsBeforeUserDevfuleRemovedEventSubscriber.class)
         .asEagerSingleton();
+
+    bind(RemoveUserDevfileOnLastUserRemovedEventSubscriber.class).asEagerSingleton();
 
     bind(new TypeLiteral<AbstractPermissionsDomain<UserDevfilePermissionImpl>>() {})
         .to(UserDevfileDomain.class);
