@@ -305,6 +305,9 @@ public class JpaEntitiesCascadeRemovalTest {
                 bind(String[].class)
                     .annotatedWith(Names.named("che.workspace.devfile.default_editor.plugins"))
                     .toInstance(new String[] {"default/plugin/0.0.1"});
+                bind(String.class)
+                    .annotatedWith(Names.named("che.workspace.devfile.async.storage.plugin"))
+                    .toInstance("");
               }
             });
 
