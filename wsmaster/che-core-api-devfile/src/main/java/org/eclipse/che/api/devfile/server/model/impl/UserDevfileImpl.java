@@ -43,7 +43,7 @@ import org.eclipse.che.api.workspace.server.model.impl.devfile.ProjectImpl;
 @Table(name = "userdevfile")
 @NamedQueries({
   @NamedQuery(name = "UserDevfile.getAll", query = "SELECT d FROM UserDevfile d ORDER BY d.id"),
-  @NamedQuery(name = "UserDevfile.getAllCount", query = "SELECT COUNT(d) FROM UserDevfile d"),
+  @NamedQuery(name = "UserDevfile.getTotalCount", query = "SELECT COUNT(d) FROM UserDevfile d"),
 })
 @Beta
 public class UserDevfileImpl implements UserDevfile {

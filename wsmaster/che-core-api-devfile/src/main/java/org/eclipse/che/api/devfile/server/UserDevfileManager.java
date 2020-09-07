@@ -29,7 +29,6 @@ import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.devfile.server.model.impl.UserDevfileImpl;
 import org.eclipse.che.api.devfile.server.spi.UserDevfileDao;
 import org.eclipse.che.api.devfile.shared.event.DevfileCreatedEvent;
-import org.eclipse.che.api.devfile.shared.event.DevfileDeletedEvent;
 import org.eclipse.che.api.devfile.shared.event.DevfileUpdatedEvent;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.lang.NameGenerator;
@@ -136,7 +135,6 @@ public class UserDevfileManager {
         "UserDevfile with id '{}' removed by user '{}'",
         id,
         EnvironmentContext.getCurrent().getSubject().getUserName());
-    eventService.publish(new DevfileDeletedEvent(id));
   }
 
   /**

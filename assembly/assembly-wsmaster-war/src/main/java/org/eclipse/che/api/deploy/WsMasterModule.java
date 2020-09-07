@@ -77,7 +77,6 @@ import org.eclipse.che.multiuser.api.authentication.commons.token.RequestTokenEx
 import org.eclipse.che.multiuser.api.permission.server.AdminPermissionInitializer;
 import org.eclipse.che.multiuser.api.permission.server.PermissionChecker;
 import org.eclipse.che.multiuser.api.permission.server.PermissionCheckerImpl;
-import org.eclipse.che.multiuser.api.workspace.activity.MultiUserWorkspaceActivityModule;
 import org.eclipse.che.multiuser.keycloak.server.deploy.KeycloakModule;
 import org.eclipse.che.multiuser.machine.authentication.server.MachineAuthModule;
 import org.eclipse.che.multiuser.organization.api.OrganizationApiModule;
@@ -345,8 +344,13 @@ public class WsMasterModule extends AbstractModule {
     install(
         new org.eclipse.che.multiuser.permission.workspace.server.jpa
             .MultiuserWorkspaceJpaModule());
-    install(new org.eclipse.che.api.devfile.server.jpa.UserDevfileJpaModule());
-    install(new MultiUserWorkspaceActivityModule());
+    install(
+        new org.eclipse.che.multiuser.permission.devfile.server.jpa
+            .MultiuserUserDevfileJpaModule());
+    install(
+        new org.eclipse.che.multiuser.permission.devfile.server.UserDevfileApiPermissionsModule());
+    install(
+        new org.eclipse.che.multiuser.api.workspace.activity.MultiUserWorkspaceActivityModule());
 
     // Permission filters
     bind(org.eclipse.che.multiuser.permission.system.SystemServicePermissionsFilter.class);
@@ -361,7 +365,6 @@ public class WsMasterModule extends AbstractModule {
     bind(org.eclipse.che.multiuser.permission.user.UserServicePermissionsFilter.class);
     bind(org.eclipse.che.multiuser.permission.logger.LoggerServicePermissionsFilter.class);
 
-    bind(org.eclipse.che.multiuser.permission.devfile.DevfilePermissionsFilter.class);
     bind(org.eclipse.che.multiuser.permission.workspace.activity.ActivityPermissionsFilter.class);
     bind(AdminPermissionInitializer.class).asEagerSingleton();
     bind(

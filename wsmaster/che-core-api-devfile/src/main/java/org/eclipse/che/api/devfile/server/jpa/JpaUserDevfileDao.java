@@ -19,9 +19,9 @@ import static java.util.stream.Collectors.toList;
 import static org.eclipse.che.api.devfile.server.jpa.JpaUserDevfileDao.UserDevfileSearchQueryBuilder.newBuilder;
 
 import com.google.common.annotations.Beta;
+import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.persist.Transactional;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,18 +37,25 @@ import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.Page;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.model.workspace.devfile.UserDevfile;
+import org.eclipse.che.api.core.notification.EventService;
+import org.eclipse.che.api.devfile.server.event.BeforeDevfileRemovedEvent;
 import org.eclipse.che.api.devfile.server.model.impl.UserDevfileImpl;
 import org.eclipse.che.api.devfile.server.spi.UserDevfileDao;
 import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.core.db.jpa.DuplicateKeyException;
 import org.eclipse.che.core.db.jpa.IntegrityConstraintViolationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** JPA based implementation of {@link UserDevfileDao}. */
 @Singleton
 @Beta
 public class JpaUserDevfileDao implements UserDevfileDao {
+  private static final Logger LOG = LoggerFactory.getLogger(JpaUserDevfileDao.class);
 
-  @Inject private Provider<EntityManager> managerProvider;
+  @Inject protected Provider<EntityManager> managerProvider;
+  @Inject protected EventService eventService;
+
   public static final List<Pair<String, String>> DEFAULT_ORDER =
       ImmutableList.of(new Pair<>("id", "ASC"));
 
@@ -109,7 +116,7 @@ public class JpaUserDevfileDao implements UserDevfileDao {
   }
 
   @Override
-  @Transactional(rollbackOn = {RuntimeException.class, ServerException.class})
+  @Transactional(rollbackOn = {ServerException.class})
   public Page<UserDevfile> getDevfiles(
       int maxItems,
       int skipCount,
@@ -122,6 +129,18 @@ public class JpaUserDevfileDao implements UserDevfileDao {
         skipCount >= 0,
         "The number of items to skip can't be negative or greater than " + Integer.MAX_VALUE);
 
+    return doGetDevfiles(
+        maxItems, skipCount, filter, order, () -> newBuilder(managerProvider.get()));
+  }
+
+  @Transactional(rollbackOn = {ServerException.class})
+  protected Page<UserDevfile> doGetDevfiles(
+      int maxItems,
+      int skipCount,
+      List<Pair<String, String>> filter,
+      List<Pair<String, String>> order,
+      Supplier<UserDevfileSearchQueryBuilder> queryBuilderSupplier)
+      throws ServerException {
     if (filter != null && !filter.isEmpty()) {
       List<Pair<String, String>> invalidFilter =
           filter
@@ -149,13 +168,14 @@ public class JpaUserDevfileDao implements UserDevfileDao {
     }
     try {
       final long count =
-          newBuilder(managerProvider.get()).withFilter(filter).buildCountQuery().getSingleResult();
+          queryBuilderSupplier.get().withFilter(filter).buildCountQuery().getSingleResult();
 
       if (count == 0) {
         return new Page<>(emptyList(), skipCount, maxItems, count);
       }
       List<UserDevfileImpl> result =
-          newBuilder(managerProvider.get())
+          queryBuilderSupplier
+              .get()
               .withFilter(filter)
               .withOrder(effectiveOrder)
               .withMaxItems(maxItems)
@@ -167,6 +187,19 @@ public class JpaUserDevfileDao implements UserDevfileDao {
               .collect(toList());
       return new Page<>(result, skipCount, maxItems, count);
 
+    } catch (RuntimeException x) {
+      throw new ServerException(x.getLocalizedMessage(), x);
+    }
+  }
+
+  @Override
+  @Transactional
+  public long getTotalCount() throws ServerException {
+    try {
+      return managerProvider
+          .get()
+          .createNamedQuery("UserDevfile.getTotalCount", Long.class)
+          .getSingleResult();
     } catch (RuntimeException x) {
       throw new ServerException(x.getLocalizedMessage(), x);
     }
@@ -190,49 +223,51 @@ public class JpaUserDevfileDao implements UserDevfileDao {
     return Optional.of(merged);
   }
 
-  @Transactional
-  protected void doRemove(String id) {
+  @Transactional(rollbackOn = {RuntimeException.class, ServerException.class})
+  protected void doRemove(String id) throws ServerException {
     final EntityManager manager = managerProvider.get();
     final UserDevfileImpl devfile = manager.find(UserDevfileImpl.class, id);
     if (devfile != null) {
+      eventService
+          .publish(new BeforeDevfileRemovedEvent(new UserDevfileImpl(devfile)))
+          .propagateException();
       manager.remove(devfile);
       manager.flush();
     }
   }
 
-  protected static class UserDevfileSearchQueryBuilder {
-    private EntityManager entityManager;
-    private int maxItems;
-    private int skipCount;
-    private String filter;
-    private Map<String, String> params;
-    private String order;
+  public static class UserDevfileSearchQueryBuilder {
+    protected EntityManager entityManager;
+    protected int maxItems;
+    protected int skipCount;
+    protected String filter;
+    protected Map<String, String> params;
+    protected String order;
 
-    private UserDevfileSearchQueryBuilder(EntityManager entityManager) {
+    public UserDevfileSearchQueryBuilder(EntityManager entityManager) {
       this.entityManager = entityManager;
-      this.params = Collections.emptyMap();
+      this.params = new HashMap<>();
     }
 
-    static UserDevfileSearchQueryBuilder newBuilder(EntityManager entityManager) {
+    public static UserDevfileSearchQueryBuilder newBuilder(EntityManager entityManager) {
       return new JpaUserDevfileDao.UserDevfileSearchQueryBuilder(entityManager);
     }
 
-    protected UserDevfileSearchQueryBuilder withMaxItems(int maxItems) {
+    public UserDevfileSearchQueryBuilder withMaxItems(int maxItems) {
       this.maxItems = maxItems;
       return this;
     }
 
-    protected UserDevfileSearchQueryBuilder withSkipCount(int skipCount) {
+    public UserDevfileSearchQueryBuilder withSkipCount(int skipCount) {
       this.skipCount = skipCount;
       return this;
     }
 
-    protected UserDevfileSearchQueryBuilder withFilter(List<Pair<String, String>> filter) {
+    public UserDevfileSearchQueryBuilder withFilter(List<Pair<String, String>> filter) {
       if (filter == null || filter.isEmpty()) {
         this.filter = "";
         return this;
       }
-      this.params = new HashMap<>();
       final StringJoiner matcher = new StringJoiner(" AND ", " WHERE ", " ");
       int i = 0;
       for (Pair<String, String> attribute : filter) {
@@ -250,7 +285,7 @@ public class JpaUserDevfileDao implements UserDevfileDao {
       return this;
     }
 
-    protected UserDevfileSearchQueryBuilder withOrder(List<Pair<String, String>> order) {
+    public UserDevfileSearchQueryBuilder withOrder(List<Pair<String, String>> order) {
       if (order == null || order.isEmpty()) {
         this.order = "";
         return this;
@@ -262,7 +297,7 @@ public class JpaUserDevfileDao implements UserDevfileDao {
       return this;
     }
 
-    protected TypedQuery<Long> buildCountQuery() {
+    public TypedQuery<Long> buildCountQuery() {
       StringBuilder query =
           new StringBuilder()
               .append("SELECT ")
@@ -274,7 +309,7 @@ public class JpaUserDevfileDao implements UserDevfileDao {
       return typedQuery;
     }
 
-    protected TypedQuery<UserDevfileImpl> buildSelectItemsQuery() {
+    public TypedQuery<UserDevfileImpl> buildSelectItemsQuery() {
 
       StringBuilder query =
           new StringBuilder()

@@ -241,7 +241,6 @@
                                     che-core-api-user,
                                     che-core-api-ssh,
                                     che-core-api-workspace,
-                                    che-core-api-devfile,
                                     che-multiuser-machine-authentication,
                                     infrastructure-kubernetes</includeArtifactIds>
                             <includeScope>test</includeScope>
