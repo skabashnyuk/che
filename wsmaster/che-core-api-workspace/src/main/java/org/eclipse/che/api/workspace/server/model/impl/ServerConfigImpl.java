@@ -33,7 +33,7 @@ import org.eclipse.che.api.core.model.workspace.devfile.Endpoint;
 /** @author Alexander Garagatyi */
 @Entity(name = "ServerConf")
 @Table(name = "serverconf")
-public class  ServerConfigImpl implements ServerConfig {
+public class ServerConfigImpl implements ServerConfig {
 
   @Id
   @GeneratedValue

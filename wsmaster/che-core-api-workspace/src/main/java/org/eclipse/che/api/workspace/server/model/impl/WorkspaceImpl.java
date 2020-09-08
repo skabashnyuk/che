@@ -36,7 +36,6 @@ import org.eclipse.che.account.shared.model.Account;
 import org.eclipse.che.account.spi.AccountImpl;
 import org.eclipse.che.api.core.model.workspace.Runtime;
 import org.eclipse.che.api.core.model.workspace.Workspace;
-import org.eclipse.che.api.core.model.workspace.WorkspaceConfig;
 import org.eclipse.che.api.core.model.workspace.WorkspaceStatus;
 import org.eclipse.che.api.core.model.workspace.devfile.Devfile;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.DevfileImpl;
@@ -93,10 +92,6 @@ public class WorkspaceImpl implements Workspace {
   private String name;
 
   @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
-  @JoinColumn(name = "config_id")
-  private WorkspaceConfigImpl config;
-
-  @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
   @JoinColumn(name = "devfile_id")
   private DevfileImpl devfile;
 
@@ -119,10 +114,6 @@ public class WorkspaceImpl implements Workspace {
 
   public WorkspaceImpl() {}
 
-  public WorkspaceImpl(String id, Account account, WorkspaceConfig config) {
-    this(id, account, config, null, null, false, null);
-  }
-
   public WorkspaceImpl(String id, Account account, Devfile devfile) {
     this(id, account, devfile, null, null, false, null);
   }
@@ -130,47 +121,18 @@ public class WorkspaceImpl implements Workspace {
   public WorkspaceImpl(
       String id,
       Account account,
-      WorkspaceConfig config,
-      Runtime runtime,
-      Map<String, String> attributes,
-      boolean isTemporary,
-      WorkspaceStatus status) {
-    this(id, account, config, null, runtime, attributes, isTemporary, status);
-  }
-
-  public WorkspaceImpl(
-      String id,
-      Account account,
-      Devfile devfile,
-      Runtime runtime,
-      Map<String, String> attributes,
-      boolean isTemporary,
-      WorkspaceStatus status) {
-    this(id, account, null, devfile, runtime, attributes, isTemporary, status);
-  }
-
-  public WorkspaceImpl(
-      String id,
-      Account account,
-      WorkspaceConfig config,
       Devfile devfile,
       Runtime runtime,
       Map<String, String> attributes,
       boolean isTemporary,
       WorkspaceStatus status) {
     this.id = id;
+
     if (account != null) {
       this.account = new AccountImpl(account);
     }
-    if (config != null && devfile != null) {
-      throw new IllegalArgumentException("Only config or devfile must be specified.");
-    }
-    if (config != null) {
-      this.config = new WorkspaceConfigImpl(config);
-    }
-    if (devfile != null) {
-      this.devfile = new DevfileImpl(devfile);
-    }
+
+    this.devfile = new DevfileImpl(devfile);
     if (runtime != null) {
       this.runtime =
           new RuntimeImpl(
@@ -191,7 +153,6 @@ public class WorkspaceImpl implements Workspace {
     this(
         workspace.getId(),
         account,
-        workspace.getConfig(),
         workspace.getDevfile(),
         workspace.getRuntime(),
         workspace.getAttributes(),
@@ -224,8 +185,6 @@ public class WorkspaceImpl implements Workspace {
   public String getName() {
     if (devfile != null) {
       return devfile.getMetadata().getName();
-    } else if (config != null) {
-      return config.getName();
     } else {
       return null;
     }
@@ -237,16 +196,6 @@ public class WorkspaceImpl implements Workspace {
 
   public AccountImpl getAccount() {
     return account;
-  }
-
-  @Nullable
-  @Override
-  public WorkspaceConfigImpl getConfig() {
-    return config;
-  }
-
-  public void setConfig(WorkspaceConfigImpl config) {
-    this.config = config;
   }
 
   @Nullable
@@ -309,7 +258,6 @@ public class WorkspaceImpl implements Workspace {
         && Objects.equals(status, other.status)
         && isTemporary == other.isTemporary
         && getAttributes().equals(other.getAttributes())
-        && Objects.equals(config, other.config)
         && Objects.equals(devfile, other.devfile)
         && Objects.equals(runtime, other.runtime);
   }
@@ -320,7 +268,6 @@ public class WorkspaceImpl implements Workspace {
     hash = 31 * hash + Objects.hashCode(id);
     hash = 31 * hash + Objects.hashCode(getNamespace());
     hash = 31 * hash + Objects.hashCode(status);
-    hash = 31 * hash + Objects.hashCode(config);
     hash = 31 * hash + Objects.hashCode(devfile);
     hash = 31 * hash + getAttributes().hashCode();
     hash = 31 * hash + Boolean.hashCode(isTemporary);
@@ -340,8 +287,6 @@ public class WorkspaceImpl implements Workspace {
         + ", name='"
         + name
         + '\''
-        + ", config="
-        + config
         + ", devfile="
         + devfile
         + ", isTemporary="
@@ -393,23 +338,16 @@ public class WorkspaceImpl implements Workspace {
     private Account account;
     private boolean isTemporary;
     private WorkspaceStatus status;
-    private WorkspaceConfig config;
     private Devfile devfile;
     private Runtime runtime;
     private Map<String, String> attributes;
 
     public WorkspaceImpl build() {
-      return new WorkspaceImpl(
-          id, account, config, devfile, runtime, attributes, isTemporary, status);
+      return new WorkspaceImpl(id, account, devfile, runtime, attributes, isTemporary, status);
     }
 
     public WorkspaceImplBuilder generateId() {
       id = NameGenerator.generate("workspace", 16);
-      return this;
-    }
-
-    public WorkspaceImplBuilder setConfig(WorkspaceConfig workspaceConfig) {
-      this.config = workspaceConfig;
       return this;
     }
 

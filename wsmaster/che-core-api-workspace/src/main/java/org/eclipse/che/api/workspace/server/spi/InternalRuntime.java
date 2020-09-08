@@ -11,11 +11,6 @@
  */
 package org.eclipse.che.api.workspace.server.spi;
 
-import static java.util.stream.Collectors.toMap;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import org.eclipse.che.api.core.model.workspace.Warning;
 import org.eclipse.che.api.core.model.workspace.WorkspaceStatus;
 import org.eclipse.che.api.core.model.workspace.config.Command;
@@ -30,6 +25,12 @@ import org.eclipse.che.api.workspace.server.model.impl.WarningImpl;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.annotation.Traced;
 import org.eclipse.che.commons.tracing.TracingTags;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static java.util.stream.Collectors.toMap;
 
 /**
  * Implementation of concrete Runtime.
@@ -219,6 +220,7 @@ public abstract class InternalRuntime<T extends RuntimeContext> {
     for (Map.Entry<String, ? extends Server> entry : incoming.entrySet()) {
       String name = entry.getKey();
       Server incomingServer = entry.getValue();
+
       if (ServerConfig.isInternal(incomingServer.getAttributes())) {
         outgoing.put(name, incomingServer);
       } else {

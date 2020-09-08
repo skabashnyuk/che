@@ -19,17 +19,15 @@ import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 import org.eclipse.che.api.core.model.workspace.Warning;
-import org.eclipse.che.api.core.model.workspace.WorkspaceConfig;
 import org.eclipse.che.api.core.model.workspace.config.Command;
-import org.eclipse.che.api.core.model.workspace.config.Environment;
 import org.eclipse.che.api.workspace.server.model.impl.CommandImpl;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.DevfileImpl;
 import org.eclipse.che.api.workspace.server.spi.RuntimeInfrastructure;
 import org.eclipse.che.commons.annotation.Nullable;
 
 /**
- * Representation of {@link Environment} which holds internal representations of environment
- * components to ease implementation of {@link RuntimeInfrastructure}.
+ * Internal representations of environment components to ease implementation of {@link
+ * RuntimeInfrastructure}.
  *
  * <p>It is related but not really bound to some specific infrastructure. It lets an infrastructure
  * apply multiple different implementations, some of which can be considered as a "native format",
@@ -143,8 +141,6 @@ public abstract class InternalEnvironment {
    * notification.
    *
    * <p>Returns map of workspace config attributes that can be used for workspace runtime creation.
-   *
-   * @see WorkspaceConfig#getAttributes()
    */
   @Beta
   public Map<String, String> getAttributes() {
@@ -160,7 +156,6 @@ public abstract class InternalEnvironment {
    *
    * @param attributes workspace config attributes that might be used in creation of workspace
    *     runtime
-   * @see WorkspaceConfig#getAttributes()
    */
   @Beta
   public InternalEnvironment setAttributes(Map<String, String> attributes) {

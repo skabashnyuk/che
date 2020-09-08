@@ -11,22 +11,6 @@
  */
 package org.eclipse.che.api.workspace.server;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
-import static java.util.Collections.emptyMap;
-import static java.util.stream.Collectors.toList;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static org.eclipse.che.api.workspace.server.DtoConverter.asDto;
-import static org.eclipse.che.api.workspace.server.WorkspaceKeyValidator.validateKey;
-import static org.eclipse.che.api.workspace.shared.Constants.CHE_WORKSPACE_AUTO_START;
-import static org.eclipse.che.api.workspace.shared.Constants.CHE_WORKSPACE_DEVFILE_REGISTRY_URL_PROPERTY;
-import static org.eclipse.che.api.workspace.shared.Constants.CHE_WORKSPACE_PLUGIN_REGISTRY_URL_PROPERTY;
-import static org.eclipse.che.api.workspace.shared.Constants.CHE_WORKSPACE_STORAGE_AVAILABLE_TYPES;
-import static org.eclipse.che.api.workspace.shared.Constants.CHE_WORKSPACE_STORAGE_PREFERRED_TYPE;
-import static org.eclipse.che.api.workspace.shared.Constants.DEBUG_WORKSPACE_START;
-import static org.eclipse.che.api.workspace.shared.Constants.DEBUG_WORKSPACE_START_LOG_LIMIT_BYTES;
-import static org.eclipse.che.api.workspace.shared.Constants.WORKSPACE_INFRASTRUCTURE_NAMESPACE_ATTRIBUTE;
-
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
@@ -38,10 +22,33 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Example;
 import io.swagger.annotations.ExampleProperty;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import org.eclipse.che.api.core.BadRequestException;
+import org.eclipse.che.api.core.ConflictException;
+import org.eclipse.che.api.core.ForbiddenException;
+import org.eclipse.che.api.core.NotFoundException;
+import org.eclipse.che.api.core.Page;
+import org.eclipse.che.api.core.Pages;
+import org.eclipse.che.api.core.ServerException;
+import org.eclipse.che.api.core.ValidationException;
+import org.eclipse.che.api.core.model.workspace.Workspace;
+import org.eclipse.che.api.core.model.workspace.config.ServerConfig;
+import org.eclipse.che.api.core.rest.Service;
+import org.eclipse.che.api.workspace.server.devfile.FileContentProvider;
+import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
+import org.eclipse.che.api.workspace.server.devfile.URLFileContentProvider;
+import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
+import org.eclipse.che.api.workspace.server.token.MachineAccessForbidden;
+import org.eclipse.che.api.workspace.server.token.MachineTokenException;
+import org.eclipse.che.api.workspace.server.token.MachineTokenProvider;
+import org.eclipse.che.api.workspace.shared.Constants;
+import org.eclipse.che.api.workspace.shared.dto.MachineDto;
+import org.eclipse.che.api.workspace.shared.dto.RuntimeDto;
+import org.eclipse.che.api.workspace.shared.dto.ServerDto;
+import org.eclipse.che.api.workspace.shared.dto.WorkspaceDto;
+import org.eclipse.che.api.workspace.shared.dto.devfile.DevfileDto;
+import org.eclipse.che.commons.annotation.Nullable;
+import org.eclipse.che.commons.env.EnvironmentContext;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.ws.rs.Consumes;
@@ -57,34 +64,26 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import org.eclipse.che.api.core.BadRequestException;
-import org.eclipse.che.api.core.ConflictException;
-import org.eclipse.che.api.core.ForbiddenException;
-import org.eclipse.che.api.core.NotFoundException;
-import org.eclipse.che.api.core.Page;
-import org.eclipse.che.api.core.Pages;
-import org.eclipse.che.api.core.ServerException;
-import org.eclipse.che.api.core.ValidationException;
-import org.eclipse.che.api.core.model.workspace.Workspace;
-import org.eclipse.che.api.core.rest.Service;
-import org.eclipse.che.api.workspace.server.devfile.FileContentProvider;
-import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
-import org.eclipse.che.api.workspace.server.devfile.URLFileContentProvider;
-import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
-import org.eclipse.che.api.workspace.server.token.MachineAccessForbidden;
-import org.eclipse.che.api.workspace.server.token.MachineTokenException;
-import org.eclipse.che.api.workspace.server.token.MachineTokenProvider;
-import org.eclipse.che.api.workspace.shared.Constants;
-import org.eclipse.che.api.workspace.shared.dto.EnvironmentDto;
-import org.eclipse.che.api.workspace.shared.dto.MachineDto;
-import org.eclipse.che.api.workspace.shared.dto.RecipeDto;
-import org.eclipse.che.api.workspace.shared.dto.RuntimeDto;
-import org.eclipse.che.api.workspace.shared.dto.ServerDto;
-import org.eclipse.che.api.workspace.shared.dto.WorkspaceConfigDto;
-import org.eclipse.che.api.workspace.shared.dto.WorkspaceDto;
-import org.eclipse.che.api.workspace.shared.dto.devfile.DevfileDto;
-import org.eclipse.che.commons.annotation.Nullable;
-import org.eclipse.che.commons.env.EnvironmentContext;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static java.util.Collections.emptyMap;
+import static java.util.stream.Collectors.toList;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static org.eclipse.che.api.workspace.server.DtoConverter.asDto;
+import static org.eclipse.che.api.workspace.server.WorkspaceKeyValidator.validateKey;
+import static org.eclipse.che.api.workspace.shared.Constants.CHE_WORKSPACE_AUTO_START;
+import static org.eclipse.che.api.workspace.shared.Constants.CHE_WORKSPACE_DEVFILE_REGISTRY_URL_PROPERTY;
+import static org.eclipse.che.api.workspace.shared.Constants.CHE_WORKSPACE_PLUGIN_REGISTRY_URL_PROPERTY;
+import static org.eclipse.che.api.workspace.shared.Constants.CHE_WORKSPACE_STORAGE_AVAILABLE_TYPES;
+import static org.eclipse.che.api.workspace.shared.Constants.CHE_WORKSPACE_STORAGE_PREFERRED_TYPE;
+import static org.eclipse.che.api.workspace.shared.Constants.DEBUG_WORKSPACE_START;
+import static org.eclipse.che.api.workspace.shared.Constants.DEBUG_WORKSPACE_START_LOG_LIMIT_BYTES;
+import static org.eclipse.che.api.workspace.shared.Constants.WORKSPACE_INFRASTRUCTURE_NAMESPACE_ATTRIBUTE;
 
 /**
  * Defines Workspace REST API.
@@ -334,10 +333,8 @@ public class WorkspaceService extends Service {
       @ApiParam(value = "The workspace update", required = true) WorkspaceDto update)
       throws BadRequestException, ServerException, ForbiddenException, NotFoundException,
           ConflictException {
-    checkArgument(
-        update.getConfig() != null ^ update.getDevfile() != null,
-        "Required non-null workspace configuration or devfile update but not both");
-    relativizeRecipeLinks(update.getConfig());
+    checkArgument(update.getDevfile() != null,
+        "Required non-null workspace devfile update");
     return asDtoWithLinksAndToken(doUpdate(id, update));
   }
 
@@ -499,31 +496,6 @@ public class WorkspaceService extends Service {
     }
   }
 
-  private void relativizeRecipeLinks(WorkspaceConfigDto config) {
-    if (config != null) {
-      Map<String, EnvironmentDto> environments = config.getEnvironments();
-      if (environments != null && !environments.isEmpty()) {
-        for (EnvironmentDto environment : environments.values()) {
-          relativizeRecipeLinks(environment);
-        }
-      }
-    }
-  }
-
-  private void relativizeRecipeLinks(EnvironmentDto environment) {
-    if (environment != null) {
-      RecipeDto recipe = environment.getRecipe();
-      if (recipe != null) {
-        if ("dockerfile".equals(recipe.getType())) {
-          String location = recipe.getLocation();
-          if (location != null && location.startsWith(apiEndpoint)) {
-            recipe.setLocation(location.substring(apiEndpoint.length()));
-          }
-        }
-      }
-    }
-  }
-
   private WorkspaceImpl doUpdate(String id, Workspace update)
       throws BadRequestException, ConflictException, NotFoundException, ServerException {
     try {
@@ -577,7 +549,7 @@ public class WorkspaceService extends Service {
           .getServers()
           .forEach(
               (name, server) -> {
-                if (!server.isInternal()) {
+                if (!ServerConfig.isInternal(server.getAttributes())) {
                   filteredServers.put(name, server);
                 }
               });

@@ -13,7 +13,6 @@ package org.eclipse.che.api.workspace.server.devfile.convert.component;
 
 import org.eclipse.che.api.workspace.server.devfile.FileContentProvider;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileException;
-import org.eclipse.che.api.workspace.server.model.impl.WorkspaceConfigImpl;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.ComponentImpl;
 
 /**
@@ -27,7 +26,6 @@ public interface ComponentToWorkspaceApplier {
   /**
    * Applies changes on workspace config according to the specified component.
    *
-   * @param workspaceConfig workspace config on which changes should be applied
    * @param component component that should be applied
    * @param contentProvider optional content provider that may be used for external component
    *     resource fetching
@@ -36,9 +34,5 @@ public interface ComponentToWorkspaceApplier {
    *     external file content
    * @throws DevfileException if any exception occurs during content retrieving
    */
-  void apply(
-      WorkspaceConfigImpl workspaceConfig,
-      ComponentImpl component,
-      FileContentProvider contentProvider)
-      throws DevfileException;
+  void apply(ComponentImpl component, FileContentProvider contentProvider) throws DevfileException;
 }

@@ -223,31 +223,6 @@ public class WorkspaceRuntimes {
       config = devfileConverter.convert(workspace.getDevfile());
     }
 
-    if (envName != null && !config.getEnvironments().containsKey(envName)) {
-      throw new NotFoundException(
-          format(
-              "Workspace '%s:%s' doesn't contain environment '%s'",
-              workspace.getNamespace(), config.getName(), envName));
-    }
-
-    if (envName == null) {
-      // use default environment if it is not defined
-      envName = config.getDefaultEnv();
-    }
-
-    if (envName == null
-        && SidecarToolingWorkspaceUtil.isSidecarBasedWorkspace(config.getAttributes())) {
-      // Sidecar-based workspaces are allowed not to have any environments
-      return;
-    }
-
-    // validate environment in advance
-    if (envName == null) {
-      throw new NotFoundException(
-          format(
-              "Workspace %s:%s can't use null environment",
-              workspace.getNamespace(), config.getName()));
-    }
 
     Environment environment = config.getEnvironments().get(envName);
 
@@ -800,17 +775,16 @@ public class WorkspaceRuntimes {
 
   @VisibleForTesting
   InternalEnvironment createInternalEnvironment(
-      @Nullable Environment environment,
       Map<String, String> workspaceConfigAttributes,
       List<? extends Command> commands,
       DevfileImpl devfile)
       throws InfrastructureException, ValidationException, NotFoundException {
-    String recipeType;
-    if (environment == null) {
-      recipeType = Constants.NO_ENVIRONMENT_RECIPE_TYPE;
-    } else {
-      recipeType = environment.getRecipe().getType();
-    }
+//    String recipeType;
+//    if (environment == null) {
+//      recipeType = Constants.NO_ENVIRONMENT_RECIPE_TYPE;
+//    } else {
+//      recipeType = environment.getRecipe().getType();
+//    }
     InternalEnvironmentFactory factory = environmentFactories.get(recipeType);
     if (factory == null) {
       throw new NotFoundException(

@@ -11,7 +11,6 @@
  */
 package org.eclipse.che.api.workspace.server;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.lang.String.format;
 import static java.lang.System.currentTimeMillis;
@@ -45,7 +44,6 @@ import org.eclipse.che.api.core.Page;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.ValidationException;
 import org.eclipse.che.api.core.model.workspace.Workspace;
-import org.eclipse.che.api.core.model.workspace.WorkspaceConfig;
 import org.eclipse.che.api.core.model.workspace.WorkspaceStatus;
 import org.eclipse.che.api.core.model.workspace.devfile.Devfile;
 import org.eclipse.che.api.core.notification.EventService;
@@ -53,7 +51,6 @@ import org.eclipse.che.api.user.server.PreferenceManager;
 import org.eclipse.che.api.workspace.server.devfile.FileContentProvider;
 import org.eclipse.che.api.workspace.server.devfile.exception.DevfileFormatException;
 import org.eclipse.che.api.workspace.server.devfile.validator.DevfileIntegrityValidator;
-import org.eclipse.che.api.workspace.server.model.impl.WorkspaceConfigImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.DevfileImpl;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.MetadataImpl;
@@ -108,36 +105,6 @@ public class WorkspaceManager {
     this.preferenceManager = preferenceManager;
     this.validator = validator;
     this.devfileIntegrityValidator = devfileIntegrityValidator;
-  }
-
-  /**
-   * Creates a new {@link Workspace} instance based on the given configuration and the instance
-   * attributes.
-   *
-   * @param config the workspace config to create the new workspace instance
-   * @param namespace workspace name is unique in this namespace
-   * @param attributes workspace instance attributes
-   * @return new workspace instance
-   * @throws NullPointerException when either {@code config} or {@code namespace} is null
-   * @throws NotFoundException when account with given id was not found
-   * @throws ConflictException when any conflict occurs (e.g Workspace with such name already exists
-   *     for {@code owner})
-   * @throws ServerException when any other error occurs
-   * @throws ValidationException when incoming configuration or attributes are not valid
-   */
-  @Traced
-  public WorkspaceImpl createWorkspace(
-      WorkspaceConfig config, String namespace, Map<String, String> attributes)
-      throws ServerException, NotFoundException, ConflictException, ValidationException {
-    requireNonNull(config, "Required non-null config");
-    requireNonNull(namespace, "Required non-null namespace");
-    validator.validateConfig(config);
-    validator.validateAttributes(attributes);
-
-    WorkspaceImpl workspace =
-        doCreateWorkspace(config, accountManager.getByName(namespace), attributes, false);
-    TracingTags.WORKSPACE_ID.set(workspace.getId());
-    return workspace;
   }
 
   /**
@@ -309,19 +276,12 @@ public class WorkspaceManager {
       throws ConflictException, ServerException, NotFoundException, ValidationException {
     requireNonNull(id, "Required non-null workspace id");
     requireNonNull(update, "Required non-null workspace update");
-    checkArgument(
-        update.getConfig() != null ^ update.getDevfile() != null,
-        "Required non-null workspace configuration or devfile update but not both");
-    if (update.getConfig() != null) {
-      validator.validateConfig(update.getConfig());
-    }
+    requireNonNull(update.getDevfile() != null, " Required non-null devfile");
+
     WorkspaceImpl workspace = workspaceDao.get(id);
 
     validator.validateUpdateAttributes(workspace.getAttributes(), update.getAttributes());
 
-    if (workspace.getConfig() != null) {
-      workspace.setConfig(new WorkspaceConfigImpl(update.getConfig()));
-    }
     if (workspace.getDevfile() != null) {
       workspace.setDevfile(new DevfileImpl(update.getDevfile()));
     }
@@ -379,29 +339,6 @@ public class WorkspaceManager {
     requireNonNull(workspaceId, "Required non-null workspace id");
     final WorkspaceImpl workspace = workspaceDao.get(workspaceId);
     startAsync(workspace, envName, options);
-    return normalizeState(workspace, true);
-  }
-
-  /**
-   * Asynchronously starts workspace from the given configuration.
-   *
-   * @param config workspace configuration from which workspace is created and started
-   * @param namespace workspace name is unique in this namespace
-   * @return starting workspace
-   * @throws NullPointerException when {@code workspaceId} is null
-   * @throws NotFoundException when workspace with given {@code workspaceId} doesn't exist
-   * @throws ServerException when any other error occurs during workspace start
-   */
-  public WorkspaceImpl startWorkspace(
-      WorkspaceConfig config, String namespace, boolean isTemporary, Map<String, String> options)
-      throws ServerException, NotFoundException, ConflictException, ValidationException {
-    requireNonNull(config, "Required non-null configuration");
-    requireNonNull(namespace, "Required non-null namespace");
-    validator.validateConfig(config);
-    final WorkspaceImpl workspace =
-        doCreateWorkspace(
-            config, accountManager.getByName(namespace), Collections.emptyMap(), isTemporary);
-    startAsync(workspace, workspace.getConfig().getDefaultEnv(), options);
     return normalizeState(workspace, true);
   }
 
@@ -636,29 +573,12 @@ public class WorkspaceManager {
   }
 
   private WorkspaceImpl doCreateWorkspace(
-      WorkspaceConfig config, Account account, Map<String, String> attributes, boolean isTemporary)
-      throws ConflictException, ServerException {
-    return doCreateWorkspace(config, null, account, attributes, isTemporary);
-  }
-
-  private WorkspaceImpl doCreateWorkspace(
       Devfile devfile, Account account, Map<String, String> attributes, boolean isTemporary)
-      throws ConflictException, ServerException {
-    return doCreateWorkspace(null, devfile, account, attributes, isTemporary);
-  }
-
-  private WorkspaceImpl doCreateWorkspace(
-      WorkspaceConfig config,
-      Devfile devfile,
-      Account account,
-      Map<String, String> attributes,
-      boolean isTemporary)
       throws ConflictException, ServerException {
     WorkspaceImpl workspace =
         WorkspaceImpl.builder()
             .generateId()
             .setAccount(account)
-            .setConfig(config)
             .setDevfile(devfile)
             .setAttributes(attributes)
             .setTemporary(isTemporary)
