@@ -22,13 +22,6 @@ import org.eclipse.che.dto.shared.DTO;
 public interface WorkspaceDto extends Workspace {
 
   @Override
-  WorkspaceConfigDto getConfig();
-
-  void setConfig(WorkspaceConfigDto config);
-
-  WorkspaceDto withConfig(WorkspaceConfigDto config);
-
-  @Override
   DevfileDto getDevfile();
 
   void setDevfile(DevfileDto devfile);

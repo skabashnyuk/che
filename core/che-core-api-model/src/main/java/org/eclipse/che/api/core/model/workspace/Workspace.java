@@ -55,14 +55,6 @@ public interface Workspace {
    * as {@link #getStatus()} will never return {@link WorkspaceStatus#STOPPED}.
    */
   boolean isTemporary();
-
-  /**
-   * Returns a configuration of this workspace instance. The only one format (workspace config or
-   * devfile) may be used for workspace at the same time.
-   */
-  @Nullable
-  WorkspaceConfig getConfig();
-
   /**
    * Returns a configuration of this workspace instance in Devfile format. The only one format
    * (workspace config or devfile) may be used for workspace at the same time.

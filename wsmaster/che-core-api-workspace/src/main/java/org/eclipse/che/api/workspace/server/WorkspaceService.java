@@ -66,7 +66,6 @@ import org.eclipse.che.api.core.Pages;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.ValidationException;
 import org.eclipse.che.api.core.model.workspace.Workspace;
-import org.eclipse.che.api.core.model.workspace.config.ServerConfig;
 import org.eclipse.che.api.core.rest.Service;
 import org.eclipse.che.api.workspace.server.devfile.FileContentProvider;
 import org.eclipse.che.api.workspace.server.devfile.URLFetcher;
@@ -578,7 +577,7 @@ public class WorkspaceService extends Service {
           .getServers()
           .forEach(
               (name, server) -> {
-                if (!ServerConfig.isInternal(server.getAttributes())) {
+                if (!server.isInternal()) {
                   filteredServers.put(name, server);
                 }
               });

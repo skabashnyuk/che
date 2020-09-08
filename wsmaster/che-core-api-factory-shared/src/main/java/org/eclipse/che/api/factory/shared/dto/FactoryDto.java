@@ -39,17 +39,13 @@ public interface FactoryDto extends Factory, Hyperlinks {
 
   FactoryDto withV(String v);
 
-  @FactoryParameter(obligation = OPTIONAL)
+
   DevfileDto getDevfile();
 
   void setDevfile(DevfileDto workspace);
 
   FactoryDto withDevfile(DevfileDto devfileDto);
 
-  /** because factory DTO may have devfile, in that case, workspace may be optional */
-  @Override
-  @FactoryParameter(obligation = OPTIONAL)
-  WorkspaceConfigDto getWorkspace();
 
   void setWorkspace(WorkspaceConfigDto workspace);
 

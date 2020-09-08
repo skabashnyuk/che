@@ -11,7 +11,7 @@
  */
 package org.eclipse.che.api.core.model.factory;
 
-import org.eclipse.che.api.core.model.workspace.WorkspaceConfig;
+import org.eclipse.che.api.core.model.workspace.devfile.Devfile;
 
 /**
  * Defines the contract for the factory instance.
@@ -32,8 +32,8 @@ public interface Factory {
   /** Returns creator of this factory instance. */
   Author getCreator();
 
-  /** Returns a workspace configuration of this factory instance. */
-  WorkspaceConfig getWorkspace();
+  /** Returns a devfile configuration of this factory instance. */
+  Devfile getDevfile();
 
   /** Returns restrictions of this factory instance. */
   Policies getPolicies();

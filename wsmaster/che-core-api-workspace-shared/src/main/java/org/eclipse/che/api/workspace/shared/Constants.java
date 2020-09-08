@@ -12,7 +12,6 @@
 package org.eclipse.che.api.workspace.shared;
 
 import org.eclipse.che.api.core.model.workspace.Workspace;
-import org.eclipse.che.api.core.model.workspace.WorkspaceConfig;
 import org.eclipse.che.api.core.model.workspace.runtime.Machine;
 import org.eclipse.che.api.core.model.workspace.runtime.Server;
 
@@ -93,7 +92,7 @@ public final class Constants {
 
   /**
    * Contains an identifier of an editor that should be used in a workspace. Should be set/read from
-   * {@link WorkspaceConfig#getAttributes}.
+   * {@link Workspace#getAttributes}.
    *
    * <p>Value is plugin id.
    *
@@ -105,7 +104,7 @@ public final class Constants {
 
   /**
    * The attribute allows to configure workspace to be ephemeral with no PVC attached on K8S /
-   * OpenShift infrastructure. Should be set/read from {@link WorkspaceConfig#getAttributes}.
+   * OpenShift infrastructure. Should be set/read from {@link Workspace#getAttributes}.
    *
    * <p>Value is expected to be boolean, and if set to 'false' regardless of the PVC strategy,
    * workspace volumes would be created as `emptyDir`. When a workspace Pod is removed for any
@@ -123,7 +122,7 @@ public final class Constants {
    * sense only in case org.eclipse.che.api.workspace.shared.Constants#PERSIST_VOLUMES_ATTRIBUTE set
    * to 'false'.
    *
-   * <p>Should be set/read from {@link WorkspaceConfig#getAttributes}.
+   * <p>Should be set/read from {@link Workspace#getAttributes}.
    *
    * <p>Value is expected to be boolean, and if set to 'true' special plugin will be added to
    * workspace. It will provide ability to backup/restore project source to the async storage.
@@ -134,7 +133,7 @@ public final class Constants {
 
   /**
    * Contains a list of workspace tooling plugins that should be used in a workspace. Should be
-   * set/read from {@link WorkspaceConfig#getAttributes}.
+   * set/read from {@link Workspace#getAttributes}.
    *
    * <p>Value is comma separated list of plugins in a format: '< plugin1ID >,<plugin2ID >'<br>
    * Spaces around commas are trimmed. <br>
