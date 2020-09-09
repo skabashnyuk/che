@@ -12,7 +12,13 @@
 package org.eclipse.che.api.core.model.workspace.devfile;
 
 /** Devfile that persisted in permanent storage. */
-public interface UserDevfile extends Devfile {
+public interface UserDevfile {
   /** Returns the identifier of this persisted devfile instance. It is mandatory and unique. */
   String getId();
+  /** Returns the name of devfile. It is mandatory and unique. */
+  String getName();
+  /** Returns description of devfile */
+  String getDescription();
+  /** Returns devfile content */
+  Devfile getDevfile();
 }

@@ -45,7 +45,7 @@ public class TestObjectGenerator {
   }
 
   public static UserDevfileImpl createUserDevfile(String id, String name) {
-    return new UserDevfileImpl(id, createDevfile(name));
+    return new UserDevfileImpl(id, name, "devfile description", createDevfile(name));
   }
 
   public static DevfileImpl createDevfile(String name) {

@@ -12,14 +12,12 @@
 package org.eclipse.che.api.devfile.server.model.impl;
 
 import com.google.common.annotations.Beta;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToOne;
@@ -27,17 +25,10 @@ import javax.persistence.PostLoad;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.Table;
-import org.eclipse.che.api.core.model.workspace.devfile.Command;
-import org.eclipse.che.api.core.model.workspace.devfile.Component;
+import org.eclipse.che.account.spi.AccountImpl;
 import org.eclipse.che.api.core.model.workspace.devfile.Devfile;
-import org.eclipse.che.api.core.model.workspace.devfile.Metadata;
-import org.eclipse.che.api.core.model.workspace.devfile.Project;
 import org.eclipse.che.api.core.model.workspace.devfile.UserDevfile;
-import org.eclipse.che.api.workspace.server.model.impl.devfile.CommandImpl;
-import org.eclipse.che.api.workspace.server.model.impl.devfile.ComponentImpl;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.DevfileImpl;
-import org.eclipse.che.api.workspace.server.model.impl.devfile.MetadataImpl;
-import org.eclipse.che.api.workspace.server.model.impl.devfile.ProjectImpl;
 
 @Entity(name = "UserDevfile")
 @Table(name = "userdevfile")
@@ -59,19 +50,35 @@ public class UserDevfileImpl implements UserDevfile {
   @Column(name = "generated_name")
   private String generateName;
 
+  @Column(name = "name")
+  private String name;
+
+  @Column(name = "description")
+  private String description;
+
+  @ManyToOne
+  @JoinColumn(name = "accountid", nullable = false)
+  private AccountImpl account;
+
   public UserDevfileImpl() {}
 
-  public UserDevfileImpl(String id, Devfile devfile) {
-    this.devfile = new DevfileImpl(devfile);
-    this.id = id;
-  }
-
-  public UserDevfileImpl(UserDevfileImpl userDevfile) {
-    this(userDevfile.id, userDevfile.devfile);
+  public UserDevfileImpl(String id, UserDevfile userDevfile) {
+    this(id, userDevfile.getName(), userDevfile.getDescription(), userDevfile.getDevfile());
   }
 
   public UserDevfileImpl(UserDevfile userDevfile) {
-    this(userDevfile.getId(), new DevfileImpl(userDevfile));
+    this(
+        userDevfile.getId(),
+        userDevfile.getName(),
+        userDevfile.getDescription(),
+        userDevfile.getDevfile());
+  }
+
+  public UserDevfileImpl(String id, String name, String description, Devfile devfile) {
+    this.id = id;
+    this.name = name;
+    this.description = description;
+    this.devfile = new DevfileImpl(devfile);
   }
 
   @Override
@@ -84,61 +91,30 @@ public class UserDevfileImpl implements UserDevfile {
   }
 
   @Override
-  public String getApiVersion() {
-    return devfile.getApiVersion();
-  }
-
-  @Override
-  public List<? extends Project> getProjects() {
-    return devfile.getProjects();
-  }
-
-  @Override
-  public List<? extends Component> getComponents() {
-    return devfile.getComponents();
-  }
-
-  @Override
-  public List<? extends Command> getCommands() {
-    return devfile.getCommands();
-  }
-
-  @Override
-  public Map<String, String> getAttributes() {
-    return devfile.getAttributes();
-  }
-
-  @Override
-  public Metadata getMetadata() {
-    return devfile.getMetadata();
-  }
-
-  public void setApiVersion(String apiVersion) {
-    devfile.setApiVersion(apiVersion);
+  public String getName() {
+    return name;
   }
 
   public void setName(String name) {
-    devfile.setName(name);
+    this.name = name;
   }
 
-  public void setProjects(List<ProjectImpl> projects) {
-    devfile.setProjects(projects);
+  @Override
+  public String getDescription() {
+    return description;
   }
 
-  public void setComponents(List<ComponentImpl> components) {
-    devfile.setComponents(components);
+  public void setDescription(String description) {
+    this.description = description;
   }
 
-  public void setCommands(List<CommandImpl> commands) {
-    devfile.setCommands(commands);
+  @Override
+  public Devfile getDevfile() {
+    return devfile;
   }
 
-  public void setAttributes(Map<String, String> attributes) {
-    devfile.setAttributes(attributes);
-  }
-
-  public void setMetadata(MetadataImpl metadata) {
-    devfile.setMetadata(metadata);
+  public void setDevfile(DevfileImpl devfile) {
+    this.devfile = devfile;
   }
 
   @PostLoad
@@ -150,23 +126,5 @@ public class UserDevfileImpl implements UserDevfile {
   @PrePersist
   public void beforeDb() {
     generateName = devfile.getMetadata().getGenerateName();
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    UserDevfileImpl that = (UserDevfileImpl) o;
-    return Objects.equals(id, that.id) && Objects.equals(devfile, that.devfile);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(id, devfile);
-  }
-
-  @Override
-  public String toString() {
-    return "UserDevfileImpl{" + "id='" + id + '\'' + ", devfile=" + devfile + '}';
   }
 }

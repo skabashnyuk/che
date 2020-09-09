@@ -53,18 +53,18 @@ public class UserDevfileManager {
   /**
    * Stores {@link Devfile} instance
    *
-   * @param devfile instance of devfile which would be stored
+   * @param userDevfile instance of user devfile which would be stored
    * @return new persisted devfile instance
    * @throws ConflictException when any conflict occurs (e.g Devfile with such name already exists
    *     for {@code owner})
    * @throws NullPointerException when {@code devfile} is null
    * @throws ServerException when any other error occurs
    */
-  public UserDevfile createDevfile(Devfile devfile)
+  public UserDevfile createDevfile(UserDevfile userDevfile)
       throws ServerException, NotFoundException, ConflictException {
-    requireNonNull(devfile, "Required non-null devfile");
+    requireNonNull(userDevfile, "Required non-null devfile");
     UserDevfile result =
-        userDevfileDao.create(new UserDevfileImpl(NameGenerator.generate("devfile", 16), devfile));
+        userDevfileDao.create(new UserDevfileImpl(NameGenerator.generate("id-", 16), userDevfile));
     LOG.debug(
         "UserDevfile '{}' with id '{}' created by user '{}'",
         result.getName(),

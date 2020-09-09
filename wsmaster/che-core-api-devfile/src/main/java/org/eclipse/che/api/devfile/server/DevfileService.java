@@ -12,7 +12,6 @@
 package org.eclipse.che.api.devfile.server;
 
 import static java.util.stream.Collectors.toList;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.eclipse.che.api.devfile.server.DtoConverter.asDto;
 import static org.eclipse.che.api.workspace.server.devfile.Constants.CURRENT_API_VERSION;
@@ -34,14 +33,12 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.core.ConflictException;
@@ -54,8 +51,10 @@ import org.eclipse.che.api.core.rest.Service;
 import org.eclipse.che.api.devfile.shared.dto.UserDevfileDto;
 import org.eclipse.che.api.workspace.server.devfile.schema.DevfileSchemaProvider;
 import org.eclipse.che.api.workspace.shared.dto.devfile.DevfileDto;
+import org.eclipse.che.commons.lang.NameGenerator;
 import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.commons.lang.URLEncodedUtils;
+import org.eclipse.che.dto.server.DtoFactory;
 
 @Api(value = "/devfile", description = "Devfile REST API")
 @Path("/devfile")
@@ -95,12 +94,46 @@ public class DevfileService extends Service {
     }
   }
 
+  @Path("/devfile")
   @POST
   @Consumes({APPLICATION_JSON, "text/yaml", "text/x-yaml"})
   @Produces(APPLICATION_JSON)
   @ApiOperation(
-      value = "Creates a new persistent Devfile",
+      value = "Creates a new persistent Devfile from Devfile",
       consumes = "application/json, text/yaml, text/x-yaml",
+      produces = APPLICATION_JSON,
+      nickname = "create",
+      response = UserDevfileDto.class)
+  @ApiResponses({
+    @ApiResponse(code = 201, message = "The devfile successfully created"),
+    @ApiResponse(code = 400, message = "Missed required parameters, parameters are not valid"),
+    @ApiResponse(code = 403, message = "The user does not have access to create a new devfile"),
+    @ApiResponse(code = 409, message = "Conflict error occurred during the devfile creation"),
+    @ApiResponse(code = 500, message = "Internal server error occurred")
+  })
+  public Response createFromDevfile(
+      @ApiParam(value = "The devfile to create", required = true) DevfileDto devfile)
+      throws ConflictException, BadRequestException, ForbiddenException, NotFoundException,
+          ServerException {
+    requiredNotNull(devfile, "Devfile");
+    return Response.status(201)
+        .entity(
+            linksInjector.injectLinks(
+                asDto(
+                    userDevfileManager.createDevfile(
+                        DtoFactory.newDto(UserDevfileDto.class)
+                            .withDevfile(devfile)
+                            .withName(NameGenerator.generate("devfile-", 16)))),
+                getServiceContext()))
+        .build();
+  }
+
+  @POST
+  @Consumes({APPLICATION_JSON})
+  @Produces(APPLICATION_JSON)
+  @ApiOperation(
+      value = "Creates a new persistent Devfile",
+      consumes = "application/json",
       produces = APPLICATION_JSON,
       nickname = "create",
       response = UserDevfileDto.class)
@@ -115,16 +148,15 @@ public class DevfileService extends Service {
                 + "(e.g. The devfile with such name already exists)"),
     @ApiResponse(code = 500, message = "Internal server error occurred")
   })
-  public Response create(
-      @ApiParam(value = "The devfile to create", required = true) DevfileDto devfile,
-      @HeaderParam(CONTENT_TYPE) MediaType contentType)
+  public Response createUserDEvfile(
+      @ApiParam(value = "The devfile to create", required = true) UserDevfileDto userDevfileDto)
       throws ConflictException, BadRequestException, ForbiddenException, NotFoundException,
           ServerException {
-    requiredNotNull(devfile, "Devfile");
+    requiredNotNull(userDevfileDto, "Devfile");
     return Response.status(201)
         .entity(
             linksInjector.injectLinks(
-                asDto(userDevfileManager.createDevfile(devfile)), getServiceContext()))
+                asDto(userDevfileManager.createDevfile(userDevfileDto)), getServiceContext()))
         .build();
   }
 

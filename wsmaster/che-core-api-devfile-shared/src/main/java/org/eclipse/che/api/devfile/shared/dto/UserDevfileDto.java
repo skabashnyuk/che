@@ -13,14 +13,10 @@ package org.eclipse.che.api.devfile.shared.dto;
 
 import com.google.common.annotations.Beta;
 import java.util.List;
-import java.util.Map;
 import org.eclipse.che.api.core.model.workspace.devfile.UserDevfile;
 import org.eclipse.che.api.core.rest.shared.dto.Hyperlinks;
 import org.eclipse.che.api.core.rest.shared.dto.Link;
-import org.eclipse.che.api.workspace.shared.dto.devfile.ComponentDto;
-import org.eclipse.che.api.workspace.shared.dto.devfile.DevfileCommandDto;
-import org.eclipse.che.api.workspace.shared.dto.devfile.MetadataDto;
-import org.eclipse.che.api.workspace.shared.dto.devfile.ProjectDto;
+import org.eclipse.che.api.workspace.shared.dto.devfile.DevfileDto;
 import org.eclipse.che.dto.shared.DTO;
 
 @DTO
@@ -33,41 +29,24 @@ public interface UserDevfileDto extends UserDevfile, Hyperlinks {
 
   String getId();
 
-  String getApiVersion();
+  void setName(String name);
 
-  void setApiVersion(String apiVersion);
+  UserDevfileDto withName(String name);
 
-  UserDevfileDto withApiVersion(String apiVersion);
+  String getName();
 
-  List<ProjectDto> getProjects();
+  void setDescription(String name);
 
-  void setProjects(List<ProjectDto> projects);
+  UserDevfileDto withDescription(String name);
 
-  UserDevfileDto withProjects(List<ProjectDto> projects);
+  String getDescription();
 
-  List<ComponentDto> getComponents();
+  @Override
+  DevfileDto getDevfile();
 
-  void setComponents(List<ComponentDto> components);
+  void setDevfile(DevfileDto devfile);
 
-  UserDevfileDto withComponents(List<ComponentDto> components);
-
-  List<DevfileCommandDto> getCommands();
-
-  void setCommands(List<DevfileCommandDto> commands);
-
-  UserDevfileDto withCommands(List<DevfileCommandDto> commands);
-
-  Map<String, String> getAttributes();
-
-  void setAttributes(Map<String, String> attributes);
-
-  UserDevfileDto withAttributes(Map<String, String> attributes);
-
-  MetadataDto getMetadata();
-
-  void setMetadata(MetadataDto metadata);
-
-  UserDevfileDto withMetadata(MetadataDto metadata);
+  UserDevfileDto withDevfile(DevfileDto devfile);
 
   UserDevfileDto withLinks(List<Link> links);
 }
