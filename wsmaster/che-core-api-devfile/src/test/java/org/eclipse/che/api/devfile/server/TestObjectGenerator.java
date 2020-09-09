@@ -16,6 +16,8 @@ import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 
 import com.google.common.collect.ImmutableMap;
+import org.eclipse.che.account.shared.model.Account;
+import org.eclipse.che.account.spi.AccountImpl;
 import org.eclipse.che.api.devfile.server.model.impl.UserDevfileImpl;
 import org.eclipse.che.api.devfile.shared.dto.UserDevfileDto;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.ActionImpl;
@@ -29,8 +31,18 @@ import org.eclipse.che.api.workspace.server.model.impl.devfile.MetadataImpl;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.ProjectImpl;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.SourceImpl;
 import org.eclipse.che.commons.lang.NameGenerator;
+import org.eclipse.che.commons.subject.Subject;
+import org.eclipse.che.commons.subject.SubjectImpl;
 
 public class TestObjectGenerator {
+
+  public static final String TEST_CHE_NAMESPACE = "user";
+  public static final String CURRENT_USER_ID = NameGenerator.generate("usrid", 6);
+  public static final Subject TEST_SUBJECT =
+      new SubjectImpl(TEST_CHE_NAMESPACE, CURRENT_USER_ID, "token", false);
+  public static final String USER_DEVFILE_ID = NameGenerator.generate("usrd", 16);
+  public static final Account TEST_ACCOUNT =
+      new AccountImpl("acc-id042u3ui3oi", TEST_CHE_NAMESPACE, "test");
 
   public static UserDevfileDto createUserDevfileDto() {
     return DtoConverter.asDto(createUserDevfile(NameGenerator.generate("name", 6)));
@@ -45,7 +57,7 @@ public class TestObjectGenerator {
   }
 
   public static UserDevfileImpl createUserDevfile(String id, String name) {
-    return new UserDevfileImpl(id, name, "devfile description", createDevfile(name));
+    return new UserDevfileImpl(id, TEST_ACCOUNT, name, "devfile description", createDevfile(name));
   }
 
   public static DevfileImpl createDevfile(String name) {

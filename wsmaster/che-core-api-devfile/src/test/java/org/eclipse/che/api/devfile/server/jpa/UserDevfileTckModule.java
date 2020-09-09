@@ -12,7 +12,9 @@
 package org.eclipse.che.api.devfile.server.jpa;
 
 import com.google.inject.TypeLiteral;
+import org.eclipse.che.account.spi.AccountDao;
 import org.eclipse.che.account.spi.AccountImpl;
+import org.eclipse.che.account.spi.jpa.JpaAccountDao;
 import org.eclipse.che.api.devfile.server.model.impl.UserDevfileImpl;
 import org.eclipse.che.api.devfile.server.spi.UserDevfileDao;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
@@ -75,6 +77,7 @@ public class UserDevfileTckModule extends TckModule {
     bind(TckResourcesCleaner.class).toInstance(new H2JpaCleaner(server));
 
     bind(UserDevfileDao.class).to(JpaUserDevfileDao.class);
+    bind(AccountDao.class).to(JpaAccountDao.class);
 
     bind(new TypeLiteral<TckRepository<UserDevfileImpl>>() {})
         .toInstance(new JpaTckRepository<>(UserDevfileImpl.class));

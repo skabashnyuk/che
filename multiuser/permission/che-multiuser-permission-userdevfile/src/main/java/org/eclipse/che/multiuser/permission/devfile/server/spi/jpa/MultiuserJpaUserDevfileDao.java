@@ -31,7 +31,11 @@ import org.eclipse.che.commons.subject.Subject;
 @Singleton
 public class MultiuserJpaUserDevfileDao extends JpaUserDevfileDao {
 
-  @Override
+    public MultiuserJpaUserDevfileDao() {
+        super(managerProvider, accountDao);
+    }
+
+    @Override
   public Page<UserDevfile> getDevfiles(
       int maxItems,
       int skipCount,

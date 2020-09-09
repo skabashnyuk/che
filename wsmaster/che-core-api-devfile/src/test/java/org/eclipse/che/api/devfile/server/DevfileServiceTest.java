@@ -15,6 +15,9 @@ import static com.jayway.restassured.RestAssured.given;
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static org.eclipse.che.api.devfile.server.TestObjectGenerator.TEST_ACCOUNT;
+import static org.eclipse.che.api.devfile.server.TestObjectGenerator.TEST_SUBJECT;
+import static org.eclipse.che.api.devfile.server.TestObjectGenerator.USER_DEVFILE_ID;
 import static org.eclipse.che.api.workspace.server.devfile.Constants.CURRENT_API_VERSION;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_NAME;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_PASSWORD;
@@ -57,13 +60,15 @@ import org.eclipse.che.api.workspace.server.devfile.schema.DevfileSchemaProvider
 import org.eclipse.che.api.workspace.server.devfile.validator.DevfileIntegrityValidator;
 import org.eclipse.che.api.workspace.server.devfile.validator.DevfileSchemaValidator;
 import org.eclipse.che.api.workspace.shared.dto.devfile.DevfileDto;
+import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.json.JsonHelper;
 import org.eclipse.che.commons.lang.NameGenerator;
 import org.eclipse.che.commons.lang.Pair;
-import org.eclipse.che.commons.subject.Subject;
-import org.eclipse.che.commons.subject.SubjectImpl;
 import org.eclipse.che.dto.server.DtoFactory;
 import org.everrest.assured.EverrestJetty;
+import org.everrest.core.Filter;
+import org.everrest.core.GenericContainerRequest;
+import org.everrest.core.RequestFilter;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -81,12 +86,7 @@ public class DevfileServiceTest {
 
   private DevfileSchemaProvider schemaProvider = new DevfileSchemaProvider();
 
-  private static final Subject SUBJECT = new SubjectImpl("user", "user123", "token", false);
-
-  private static final String CURRENT_USER_ID = "user123";
-
-  private final String USER_DEVFILE_ID = NameGenerator.generate("usrd", 16);
-
+  private static final EnvironmentFilter FILTER = new EnvironmentFilter();
   CheJsonProvider jsonProvider = new CheJsonProvider(new HashSet<>());
   private DevfileEntityProvider devfileEntityProvider =
       new DevfileEntityProvider(
@@ -122,30 +122,31 @@ public class DevfileServiceTest {
         .thenAnswer((Answer<UserDevfileDto>) invocation -> invocation.getArgument(0));
   }
 
-  // TODO
-  //  @Test
-  //  public void shouldCreateUserDevfile() throws Exception {
-  //    final DevfileDto devfileDto =
-  //        org.eclipse.che.api.workspace.server.DtoConverter.asDto(
-  //            TestObjectGenerator.createDevfile("devfile-name"));
-  //    final UserDevfileImpl userDevfileImpl = new UserDevfileImpl(null, devfileDto);
-  //
-  //    when(userDevfileManager.createDevfile(any(Devfile.class))).thenReturn(userDevfileImpl);
-  //
-  //    final Response response =
-  //        given()
-  //            .auth()
-  //            .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
-  //            .contentType("application/json")
-  //            .body(devfileDto)
-  //            .when()
-  //            .post(SECURE_PATH + "/devfile");
-  //
-  //    assertEquals(response.getStatusCode(), 201);
-  //    assertEquals(new UserDevfileImpl(unwrapDto(response, UserDevfileDto.class)),
-  // userDevfileImpl);
-  //    verify(userDevfileManager).createDevfile(any(Devfile.class));
-  //  }
+  @Test
+  public void shouldCreateUserDevfile() throws Exception {
+    final DevfileDto devfileDto =
+        org.eclipse.che.api.workspace.server.DtoConverter.asDto(
+            TestObjectGenerator.createDevfile("devfile-name"));
+    final UserDevfileImpl userDevfileImpl =
+        new UserDevfileImpl("id-123123", TEST_ACCOUNT, "my devfile", "supper cool", devfileDto);
+
+    when(userDevfileManager.createDevfile(any(UserDevfile.class))).thenReturn(userDevfileImpl);
+
+    final Response response =
+        given()
+            .auth()
+            .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
+            .contentType("application/json")
+            .body(devfileDto)
+            .when()
+            .post(SECURE_PATH + "/devfile");
+
+    assertEquals(response.getStatusCode(), 201);
+    assertEquals(
+        new UserDevfileImpl(unwrapDto(response, UserDevfileDto.class), TEST_ACCOUNT),
+        userDevfileImpl);
+    verify(userDevfileManager).createDevfile(any(UserDevfile.class));
+  }
 
   @Test
   public void shouldGetUserDevfileById() throws Exception {
@@ -162,7 +163,8 @@ public class DevfileServiceTest {
             .statusCode(200)
             .get(SECURE_PATH + "/devfile/id-22323");
 
-    assertEquals(new UserDevfileImpl(unwrapDto(response, UserDevfileDto.class)), userDevfile);
+    assertEquals(
+        new UserDevfileImpl(unwrapDto(response, UserDevfileDto.class), TEST_ACCOUNT), userDevfile);
     verify(userDevfileManager).getById(eq("id-22323"));
     verify(linksInjector).injectLinks(any(), any());
   }
@@ -215,7 +217,7 @@ public class DevfileServiceTest {
   public void shouldBeAbleToUpdateUserDevfile() throws Exception {
     // given
     final UserDevfileDto devfileDto = TestObjectGenerator.createUserDevfileDto();
-    final UserDevfileImpl userDevfileImpl = new UserDevfileImpl(devfileDto);
+    final UserDevfileImpl userDevfileImpl = new UserDevfileImpl(devfileDto, TEST_ACCOUNT);
     when(userDevfileManager.updateUserDevfile(any(UserDevfile.class))).thenReturn(userDevfileImpl);
 
     // when
@@ -229,7 +231,9 @@ public class DevfileServiceTest {
             .put(SECURE_PATH + "/devfile/" + devfileDto.getId());
     // then
     assertEquals(response.getStatusCode(), 200);
-    assertEquals(new UserDevfileImpl(unwrapDto(response, UserDevfileDto.class)), userDevfileImpl);
+    assertEquals(
+        new UserDevfileImpl(unwrapDto(response, UserDevfileDto.class), TEST_ACCOUNT),
+        userDevfileImpl);
     verify(userDevfileManager).updateUserDevfile(devfileDto);
     verify(linksInjector).injectLinks(any(), any());
   }
@@ -238,10 +242,11 @@ public class DevfileServiceTest {
   public void shouldOverrideIdOnUpdateUserDevfile() throws Exception {
     // given
     final UserDevfileDto devfileDto = TestObjectGenerator.createUserDevfileDto();
-    final UserDevfileImpl userDevfileImpl = new UserDevfileImpl(devfileDto);
+    final UserDevfileImpl userDevfileImpl = new UserDevfileImpl(devfileDto, TEST_ACCOUNT);
 
     final String newID = NameGenerator.generate("id", 24);
-    final UserDevfileImpl expectedUserDevfileImpl = new UserDevfileImpl(newID, userDevfileImpl);
+    final UserDevfileImpl expectedUserDevfileImpl =
+        new UserDevfileImpl(newID, TEST_ACCOUNT, userDevfileImpl);
     final UserDevfileDto expectedDto =
         org.eclipse.che.api.devfile.server.DtoConverter.asDto(expectedUserDevfileImpl);
     when(userDevfileManager.updateUserDevfile(any(UserDevfile.class)))
@@ -258,7 +263,8 @@ public class DevfileServiceTest {
     // then
     assertEquals(response.getStatusCode(), 200);
     assertEquals(
-        new UserDevfileImpl(unwrapDto(response, UserDevfileDto.class)), expectedUserDevfileImpl);
+        new UserDevfileImpl(unwrapDto(response, UserDevfileDto.class), TEST_ACCOUNT),
+        expectedUserDevfileImpl);
     verify(userDevfileManager).updateUserDevfile(expectedDto);
     verify(linksInjector).injectLinks(any(), any());
   }
@@ -297,7 +303,7 @@ public class DevfileServiceTest {
   public void shouldGetUserDevfilesAvailableToUser() throws Exception {
     // given
     final UserDevfileDto devfileDto = TestObjectGenerator.createUserDevfileDto();
-    final UserDevfileImpl userDevfileImpl = new UserDevfileImpl(devfileDto);
+    final UserDevfileImpl userDevfileImpl = new UserDevfileImpl(devfileDto, TEST_ACCOUNT);
     doReturn(new Page<>(ImmutableList.of(userDevfileImpl), 0, 1, 1))
         .when(userDevfileManager)
         .getUserDevfiles(anyInt(), anyInt(), anyList(), anyList());
@@ -405,5 +411,13 @@ public class DevfileServiceTest {
       throws IOException {
     return new ArrayList<>(
         DtoFactory.getInstance().createListDtoFromJson(response.body().asInputStream(), dtoClass));
+  }
+
+  @Filter
+  public static class EnvironmentFilter implements RequestFilter {
+
+    public void doFilter(GenericContainerRequest request) {
+      EnvironmentContext.getCurrent().setSubject(TEST_SUBJECT);
+    }
   }
 }

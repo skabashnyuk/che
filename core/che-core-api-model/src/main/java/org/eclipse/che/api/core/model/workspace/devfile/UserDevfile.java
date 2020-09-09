@@ -15,8 +15,15 @@ package org.eclipse.che.api.core.model.workspace.devfile;
 public interface UserDevfile {
   /** Returns the identifier of this persisted devfile instance. It is mandatory and unique. */
   String getId();
-  /** Returns the name of devfile. It is mandatory and unique. */
+  /** Returns the name of devfile. It is mandatory. */
   String getName();
+
+  /**
+   * Returns the namespace of the current devfile instance. Devfile name is unique for devfiles in
+   * the same namespace.
+   */
+  String getNamespace();
+
   /** Returns description of devfile */
   String getDescription();
   /** Returns devfile content */

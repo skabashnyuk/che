@@ -12,6 +12,7 @@
 package org.eclipse.che.api.devfile.server.model.impl;
 
 import com.google.common.annotations.Beta;
+import java.util.Objects;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -25,6 +26,7 @@ import javax.persistence.PostLoad;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.Table;
+import org.eclipse.che.account.shared.model.Account;
 import org.eclipse.che.account.spi.AccountImpl;
 import org.eclipse.che.api.core.model.workspace.devfile.Devfile;
 import org.eclipse.che.api.core.model.workspace.devfile.UserDevfile;
@@ -40,7 +42,7 @@ import org.eclipse.che.api.workspace.server.model.impl.devfile.DevfileImpl;
 public class UserDevfileImpl implements UserDevfile {
 
   @Id
-  @Column(name = "id")
+  @Column(name = "id", nullable = false)
   private String id;
 
   @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
@@ -50,7 +52,7 @@ public class UserDevfileImpl implements UserDevfile {
   @Column(name = "generated_name")
   private String generateName;
 
-  @Column(name = "name")
+  @Column(name = "name", nullable = false)
   private String name;
 
   @Column(name = "description")
@@ -62,20 +64,28 @@ public class UserDevfileImpl implements UserDevfile {
 
   public UserDevfileImpl() {}
 
-  public UserDevfileImpl(String id, UserDevfile userDevfile) {
-    this(id, userDevfile.getName(), userDevfile.getDescription(), userDevfile.getDevfile());
+  public UserDevfileImpl(String id, Account account, UserDevfile userDevfile) {
+    this(
+        id, account, userDevfile.getName(), userDevfile.getDescription(), userDevfile.getDevfile());
   }
 
-  public UserDevfileImpl(UserDevfile userDevfile) {
+  public UserDevfileImpl(UserDevfile userDevfile, Account account) {
+    this(userDevfile.getId(), account, userDevfile);
+  }
+
+  public UserDevfileImpl(UserDevfileImpl userDevfile) {
     this(
-        userDevfile.getId(),
+        userDevfile.id,
+        userDevfile.account,
         userDevfile.getName(),
         userDevfile.getDescription(),
         userDevfile.getDevfile());
   }
 
-  public UserDevfileImpl(String id, String name, String description, Devfile devfile) {
+  public UserDevfileImpl(
+      String id, Account account, String name, String description, Devfile devfile) {
     this.id = id;
+    this.account = new AccountImpl(account);
     this.name = name;
     this.description = description;
     this.devfile = new DevfileImpl(devfile);
@@ -93,6 +103,11 @@ public class UserDevfileImpl implements UserDevfile {
   @Override
   public String getName() {
     return name;
+  }
+
+  @Override
+  public String getNamespace() {
+    return account.getName();
   }
 
   public void setName(String name) {
@@ -117,6 +132,14 @@ public class UserDevfileImpl implements UserDevfile {
     this.devfile = devfile;
   }
 
+  public AccountImpl getAccount() {
+    return account;
+  }
+
+  public void setAccount(AccountImpl account) {
+    this.account = account;
+  }
+
   @PostLoad
   public void postLoad() {
     devfile.getMetadata().setGenerateName(generateName);
@@ -126,5 +149,41 @@ public class UserDevfileImpl implements UserDevfile {
   @PrePersist
   public void beforeDb() {
     generateName = devfile.getMetadata().getGenerateName();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    UserDevfileImpl that = (UserDevfileImpl) o;
+    return id.equals(that.id)
+        && devfile.equals(that.devfile)
+        && name.equals(that.name)
+        && Objects.equals(description, that.description)
+        && account.equals(that.account);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(id, devfile, name, description, account);
+  }
+
+  @Override
+  public String toString() {
+    return "UserDevfileImpl{"
+        + "id='"
+        + id
+        + '\''
+        + ", devfile="
+        + devfile
+        + ", name='"
+        + name
+        + '\''
+        + ", description='"
+        + description
+        + '\''
+        + ", account="
+        + account
+        + '}';
   }
 }

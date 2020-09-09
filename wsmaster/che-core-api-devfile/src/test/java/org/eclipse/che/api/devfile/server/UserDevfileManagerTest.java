@@ -13,6 +13,7 @@ package org.eclipse.che.api.devfile.server;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.util.Arrays.asList;
+import static org.eclipse.che.api.devfile.server.TestObjectGenerator.TEST_ACCOUNT;
 import static org.eclipse.che.api.devfile.server.TestObjectGenerator.createUserDevfile;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -57,7 +58,8 @@ public class UserDevfileManagerTest {
   @Test
   public void shouldGenerateUserDevfileIdOnCreation() throws Exception {
     // given
-    final UserDevfileImpl userDevfile = new UserDevfileImpl(null, createUserDevfile());
+    final UserDevfileImpl userDevfile =
+        new UserDevfileImpl(null, TEST_ACCOUNT, createUserDevfile());
     when(userDevfileDao.create(any(UserDevfileImpl.class)))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArguments()[0]);
     // when
@@ -65,13 +67,14 @@ public class UserDevfileManagerTest {
     // then
     verify(userDevfileDao).create(userDevfileArgumentCaptor.capture());
     assertFalse(isNullOrEmpty(userDevfileArgumentCaptor.getValue().getId()));
-    assertEquals(new UserDevfileImpl(null, actual), userDevfile);
+    assertEquals(new UserDevfileImpl(null, TEST_ACCOUNT, actual), userDevfile);
   }
 
   @Test
   public void shouldSendDevfileCreatedEventOnCreation() throws Exception {
     // given
-    final UserDevfileImpl userDevfile = new UserDevfileImpl(null, createUserDevfile());
+    final UserDevfileImpl userDevfile =
+        new UserDevfileImpl(null, TEST_ACCOUNT, createUserDevfile());
     when(userDevfileDao.create(any(UserDevfileImpl.class)))
         .thenAnswer(invocationOnMock -> invocationOnMock.getArguments()[0]);
     // when

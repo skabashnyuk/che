@@ -33,7 +33,10 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
+import org.eclipse.che.account.shared.model.Account;
+import org.eclipse.che.account.spi.AccountDao;
 import org.eclipse.che.api.core.ConflictException;
+import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.Page;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.model.workspace.devfile.UserDevfile;
@@ -53,38 +56,55 @@ import org.slf4j.LoggerFactory;
 public class JpaUserDevfileDao implements UserDevfileDao {
   private static final Logger LOG = LoggerFactory.getLogger(JpaUserDevfileDao.class);
 
-  @Inject protected Provider<EntityManager> managerProvider;
-  @Inject protected EventService eventService;
+  private final Provider<EntityManager> managerProvider;
+  private final AccountDao accountDao;
+  private final EventService eventService;
 
   public static final List<Pair<String, String>> DEFAULT_ORDER =
       ImmutableList.of(new Pair<>("id", "ASC"));
 
+  @Inject
+  public JpaUserDevfileDao(
+      Provider<EntityManager> managerProvider, AccountDao accountDao, EventService eventService) {
+    this.managerProvider = managerProvider;
+    this.accountDao = accountDao;
+    this.eventService = eventService;
+  }
+
   @Override
-  public UserDevfile create(UserDevfile devfile) throws ConflictException, ServerException {
-    requireNonNull(devfile);
+  public UserDevfile create(UserDevfile userDevfile)
+      throws ConflictException, ServerException, NotFoundException {
+    requireNonNull(userDevfile);
     try {
-      doCreate(new UserDevfileImpl(devfile));
+      Account account = accountDao.getByName(userDevfile.getNamespace());
+      UserDevfileImpl userDevfileImpl = new UserDevfileImpl(userDevfile, account);
+      doCreate(userDevfileImpl);
+      return userDevfileImpl;
     } catch (DuplicateKeyException ex) {
       throw new ConflictException(
-          format("Devfile with name '%s' already exists for current user", devfile.getName()));
+          format(
+              "Devfile with name '%s' already exists in current account '%s'",
+              userDevfile.getName(), userDevfile.getNamespace()));
     } catch (IntegrityConstraintViolationException ex) {
       throw new ConflictException(
           "Could not create devfile with creator that refers on non-existent user");
     } catch (RuntimeException ex) {
       throw new ServerException(ex.getMessage(), ex);
     }
-    return new UserDevfileImpl(devfile);
   }
 
   @Override
-  public Optional<UserDevfile> update(UserDevfile update)
-      throws ConflictException, ServerException {
-    requireNonNull(update);
+  public Optional<UserDevfile> update(UserDevfile userDevfile)
+      throws ConflictException, ServerException, NotFoundException {
+    requireNonNull(userDevfile);
     try {
-      return doUpdate(new UserDevfileImpl(update)).map(UserDevfileImpl::new);
+      Account account = accountDao.getByName(userDevfile.getNamespace());
+      return doUpdate(new UserDevfileImpl(userDevfile, account)).map(UserDevfileImpl::new);
     } catch (DuplicateKeyException ex) {
       throw new ConflictException(
-          format("Devfile with name '%s' already exists for current user", update.getName()));
+          format(
+              "Devfile with name '%s' already exists in current account '%s'",
+              userDevfile.getName(), userDevfile.getNamespace()));
     } catch (RuntimeException ex) {
       throw new ServerException(ex.getLocalizedMessage(), ex);
     }

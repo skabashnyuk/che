@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import org.eclipse.che.account.api.AccountManager;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.Page;
@@ -43,9 +44,12 @@ public class UserDevfileManager {
   private static final Logger LOG = LoggerFactory.getLogger(UserDevfileManager.class);
   private final UserDevfileDao userDevfileDao;
   private final EventService eventService;
+  private final AccountManager accountManager;
 
   @Inject
-  public UserDevfileManager(UserDevfileDao userDevfileDao, EventService eventService) {
+  public UserDevfileManager(
+      AccountManager accountManager, UserDevfileDao userDevfileDao, EventService eventService) {
+    this.accountManager = accountManager;
     this.userDevfileDao = userDevfileDao;
     this.eventService = eventService;
   }
@@ -63,8 +67,14 @@ public class UserDevfileManager {
   public UserDevfile createDevfile(UserDevfile userDevfile)
       throws ServerException, NotFoundException, ConflictException {
     requireNonNull(userDevfile, "Required non-null devfile");
+
     UserDevfile result =
-        userDevfileDao.create(new UserDevfileImpl(NameGenerator.generate("id-", 16), userDevfile));
+        userDevfileDao.create(
+            new UserDevfileImpl(
+                NameGenerator.generate("id-", 16),
+                accountManager.getByName(
+                    EnvironmentContext.getCurrent().getSubject().getUserName()),
+                userDevfile));
     LOG.debug(
         "UserDevfile '{}' with id '{}' created by user '{}'",
         result.getName(),

@@ -15,6 +15,7 @@ import com.google.common.annotations.Beta;
 import java.util.List;
 import java.util.Optional;
 import org.eclipse.che.api.core.ConflictException;
+import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.Page;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.model.workspace.devfile.UserDevfile;
@@ -32,7 +33,8 @@ public interface UserDevfileDao {
    * @throws NullPointerException when {@code devfile} is null
    * @throws ServerException when any other error occurs
    */
-  UserDevfile create(UserDevfile devfile) throws ServerException, ConflictException;
+  UserDevfile create(UserDevfile devfile)
+      throws ServerException, ConflictException, NotFoundException;
 
   /**
    * Updates devfile to the new entity, using replacement strategy.
@@ -43,7 +45,8 @@ public interface UserDevfileDao {
    * @throws ConflictException when any conflict situation occurs
    * @throws ServerException when any other error occurs
    */
-  Optional<UserDevfile> update(UserDevfile devfile) throws ConflictException, ServerException;
+  Optional<UserDevfile> update(UserDevfile devfile)
+      throws ConflictException, ServerException, NotFoundException;
 
   /**
    * Removes devfile.
