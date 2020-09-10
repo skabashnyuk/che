@@ -16,7 +16,6 @@ import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 
 import com.google.common.collect.ImmutableMap;
-import org.eclipse.che.account.shared.model.Account;
 import org.eclipse.che.account.spi.AccountImpl;
 import org.eclipse.che.api.devfile.server.model.impl.UserDevfileImpl;
 import org.eclipse.che.api.devfile.shared.dto.UserDevfileDto;
@@ -41,7 +40,7 @@ public class TestObjectGenerator {
   public static final Subject TEST_SUBJECT =
       new SubjectImpl(TEST_CHE_NAMESPACE, CURRENT_USER_ID, "token", false);
   public static final String USER_DEVFILE_ID = NameGenerator.generate("usrd", 16);
-  public static final Account TEST_ACCOUNT =
+  public static final AccountImpl TEST_ACCOUNT =
       new AccountImpl("acc-id042u3ui3oi", TEST_CHE_NAMESPACE, "test");
 
   public static UserDevfileDto createUserDevfileDto() {

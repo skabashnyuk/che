@@ -163,13 +163,10 @@ public class JpaUserDevfileDao implements UserDevfileDao {
       throws ServerException {
     if (filter != null && !filter.isEmpty()) {
       List<Pair<String, String>> invalidFilter =
-          filter
-              .stream()
-              .filter(p -> !p.first.equalsIgnoreCase("devfile.metadata.name"))
-              .collect(toList());
+          filter.stream().filter(p -> !p.first.equalsIgnoreCase("name")).collect(toList());
       if (!invalidFilter.isEmpty()) {
         throw new IllegalArgumentException(
-            "Filtering allowed only on `devfile.metadata.name`. But got: " + invalidFilter);
+            "Filtering allowed only on `name`. But got: " + invalidFilter);
       }
     }
     List<Pair<String, String>> effectiveOrder = DEFAULT_ORDER;

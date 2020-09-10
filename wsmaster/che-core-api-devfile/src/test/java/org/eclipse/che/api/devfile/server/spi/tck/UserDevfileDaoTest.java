@@ -14,12 +14,14 @@ package org.eclipse.che.api.devfile.server.spi.tck;
 import static java.lang.Math.min;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
+import static org.eclipse.che.api.devfile.server.TestObjectGenerator.TEST_ACCOUNT;
 import static org.eclipse.che.api.devfile.server.TestObjectGenerator.createUserDevfile;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.util.Arrays;
 import java.util.Collections;
@@ -28,16 +30,26 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.stream.Stream;
 import javax.inject.Inject;
+import org.eclipse.che.account.spi.AccountDao;
+import org.eclipse.che.account.spi.AccountImpl;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.Page;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.model.workspace.devfile.UserDevfile;
 import org.eclipse.che.api.core.notification.EventService;
+import org.eclipse.che.api.devfile.server.TestObjectGenerator;
 import org.eclipse.che.api.devfile.server.event.BeforeDevfileRemovedEvent;
 import org.eclipse.che.api.devfile.server.model.impl.UserDevfileImpl;
 import org.eclipse.che.api.devfile.server.spi.UserDevfileDao;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
+import org.eclipse.che.api.workspace.server.model.impl.devfile.ActionImpl;
+import org.eclipse.che.api.workspace.server.model.impl.devfile.CommandImpl;
+import org.eclipse.che.api.workspace.server.model.impl.devfile.ComponentImpl;
+import org.eclipse.che.api.workspace.server.model.impl.devfile.DevfileImpl;
+import org.eclipse.che.api.workspace.server.model.impl.devfile.MetadataImpl;
+import org.eclipse.che.api.workspace.server.model.impl.devfile.ProjectImpl;
+import org.eclipse.che.api.workspace.server.model.impl.devfile.SourceImpl;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.lang.NameGenerator;
 import org.eclipse.che.commons.lang.Pair;
@@ -67,8 +79,13 @@ public class UserDevfileDaoTest {
 
   @Inject private TckRepository<UserImpl> userTckRepository;
 
+  @Inject private AccountDao accountDao;
+
+  @Inject private TckRepository<AccountImpl> accountRepo;
+
   @BeforeMethod
   public void setUp() throws Exception {
+    accountRepo.createAll(ImmutableList.of(TEST_ACCOUNT));
     devfiles = new UserDevfileImpl[ENTRY_COUNT];
     for (int i = 0; i < ENTRY_COUNT; i++) {
       devfiles[i] =
@@ -82,6 +99,7 @@ public class UserDevfileDaoTest {
   @AfterMethod
   public void cleanUp() throws Exception {
     devfileTckRepository.removeAll();
+    accountRepo.removeAll();
   }
 
   @Test
@@ -115,43 +133,46 @@ public class UserDevfileDaoTest {
     userDevfileDaoDao.create(devfile);
     // then
   }
-  // TODO
-  //  @Test
-  //  public void shouldUpdateUserDevfile() throws Exception {
-  //    // given
-  //    final UserDevfileImpl update = devfiles[0];
-  //    update.setApiVersion("V15.0");
-  //    update.setProjects(
-  //        ImmutableList.of(
-  //            new ProjectImpl(
-  //                "projectUp2",
-  //                new SourceImpl(
-  //                    "typeUp2",
-  //                    "http://location",
-  //                    "branch2",
-  //                    "point2",
-  //                    "tag2",
-  //                    "commit2",
-  //                    "sparseCheckoutDir2"),
-  //                "path2")));
-  //    update.setComponents(ImmutableList.of(new ComponentImpl("type3", "id54")));
-  //    update.setCommands(
-  //        ImmutableList.of(
-  //            new CommandImpl(
-  //                new CommandImpl(
-  //                    "cmd1",
-  //                    singletonList(
-  //                        new ActionImpl(
-  //                            "exe44", "compo2nent2", "run.sh", "/home/user/2", null, null)),
-  //                    singletonMap("attr1", "value1"),
-  //                    null))));
-  //    update.setAttributes(ImmutableMap.of("key2", "val34"));
-  //    update.setMetadata(new MetadataImpl("myNewName"));
-  //    // when
-  //    userDevfileDaoDao.update(update);
-  //    // then
-  //    assertEquals(userDevfileDaoDao.getById(update.getId()), Optional.of(update));
-  //  }
+
+  @Test
+  public void shouldUpdateUserDevfile() throws Exception {
+    // given
+
+    DevfileImpl newDevfile = TestObjectGenerator.createDevfile("newUpdate");
+    newDevfile.setApiVersion("V15.0");
+    newDevfile.setProjects(
+        ImmutableList.of(
+            new ProjectImpl(
+                "projectUp2",
+                new SourceImpl(
+                    "typeUp2",
+                    "http://location",
+                    "branch2",
+                    "point2",
+                    "tag2",
+                    "commit2",
+                    "sparseCheckoutDir2"),
+                "path2")));
+    newDevfile.setComponents(ImmutableList.of(new ComponentImpl("type3", "id54")));
+    newDevfile.setCommands(
+        ImmutableList.of(
+            new CommandImpl(
+                new CommandImpl(
+                    "cmd1",
+                    Collections.singletonList(
+                        new ActionImpl(
+                            "exe44", "compo2nent2", "run.sh", "/home/user/2", null, null)),
+                    Collections.singletonMap("attr1", "value1"),
+                    null))));
+    newDevfile.setAttributes(ImmutableMap.of("key2", "val34"));
+    newDevfile.setMetadata(new MetadataImpl("myNewName"));
+    final UserDevfileImpl update = devfiles[0];
+    update.setDevfile(newDevfile);
+    // when
+    userDevfileDaoDao.update(update);
+    // then
+    assertEquals(userDevfileDaoDao.getById(update.getId()), Optional.of(update));
+  }
 
   @Test
   public void shouldNotUpdateWorkspaceWhichDoesNotExist() throws Exception {
@@ -221,7 +242,7 @@ public class UserDevfileDaoTest {
         userDevfileDaoDao.getDevfiles(
             30,
             0,
-            ImmutableList.of(new Pair<>("devfile.metadata.name", "like:devfileName%")),
+            ImmutableList.of(new Pair<>("name", "like:devfileName%")),
             Collections.emptyList());
     // then
     assertEquals(new HashSet<>(result.getItems()), new HashSet<>(asList(devfiles)));
@@ -252,10 +273,7 @@ public class UserDevfileDaoTest {
     // when
     final Page<UserDevfile> result =
         userDevfileDaoDao.getDevfiles(
-            30,
-            0,
-            ImmutableList.of(new Pair<>("devfile.metadata.name", "like:%w345N%")),
-            Collections.emptyList());
+            30, 0, ImmutableList.of(new Pair<>("name", "like:%w345N%")), Collections.emptyList());
     // then
     assertEquals(new HashSet<>(result.getItems()), ImmutableSet.of(update));
   }
@@ -264,15 +282,18 @@ public class UserDevfileDaoTest {
   public void shouldBeAbleToGetAvailableToUserDevfilesWithFilterAndLimit()
       throws ServerException, NotFoundException, ConflictException {
     // given
+    final UserDevfileImpl update = devfiles[0];
+    update.setName("New345Name");
+    userDevfileDaoDao.update(update);
     // when
     final Page<UserDevfile> result =
         userDevfileDaoDao.getDevfiles(
-            5,
+            12,
             0,
-            ImmutableList.of(new Pair<>("devfile.metadata.name", "like:devfileName%")),
+            ImmutableList.of(new Pair<>("name", "like:devfileName%")),
             Collections.emptyList());
     // then
-    assertEquals(result.getItems().size(), 5);
+    assertEquals(result.getItems().size(), 9);
   }
 
   @Test

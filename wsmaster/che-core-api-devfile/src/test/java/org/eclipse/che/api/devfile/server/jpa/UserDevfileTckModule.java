@@ -83,5 +83,7 @@ public class UserDevfileTckModule extends TckModule {
         .toInstance(new JpaTckRepository<>(UserDevfileImpl.class));
     bind(new TypeLiteral<TckRepository<UserImpl>>() {})
         .toInstance(new JpaTckRepository<>(UserImpl.class));
+    bind(new TypeLiteral<TckRepository<AccountImpl>>() {})
+        .toInstance(new JpaTckRepository<>(AccountImpl.class));
   }
 }
