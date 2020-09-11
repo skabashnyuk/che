@@ -14,7 +14,6 @@ package org.eclipse.che.multiuser.permission.devfile.server.spi.jpa;
 import static org.eclipse.che.commons.lang.NameGenerator.generate;
 import static org.eclipse.che.inject.Matchers.names;
 import static org.eclipse.che.multiuser.api.permission.server.AbstractPermissionsDomain.SET_PERMISSIONS;
-import static org.eclipse.che.multiuser.permission.devfile.server.TestObjectGenerator.createDevfile;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -29,6 +28,7 @@ import org.eclipse.che.api.devfile.server.model.impl.UserDevfileImpl;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.commons.test.tck.TckModule;
 import org.eclipse.che.commons.test.tck.TckResourcesCleaner;
+import org.eclipse.che.multiuser.permission.devfile.server.TestObjectGenerator;
 import org.eclipse.che.multiuser.permission.devfile.server.model.impl.UserDevfilePermissionImpl;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -55,6 +55,7 @@ public class JpaUserDevfilePermissionDaoTest {
     final List<Object> entities = new ArrayList<>();
     entities.addAll(manager.createQuery("SELECT p FROM UserDevfilePermission p").getResultList());
     entities.addAll(manager.createQuery("SELECT d FROM UserDevfile d").getResultList());
+    entities.addAll(manager.createQuery("SELECT a FROM Account a").getResultList());
     entities.addAll(manager.createQuery("SELECT u FROM Usr u").getResultList());
     for (Object entity : entities) {
       manager.remove(entity);
@@ -69,8 +70,13 @@ public class JpaUserDevfilePermissionDaoTest {
   public void shouldThrowServerExceptionOnExistsWhenRuntimeExceptionOccursInDoGetMethod()
       throws Exception {
 
-    final UserDevfileImpl userDevfile =
-        new UserDevfileImpl(generate("id", 6), createDevfile(generate("name", 6)));
+    // Persist the account
+    manager.getTransaction().begin();
+    manager.persist(TestObjectGenerator.TEST_ACCOUNT);
+    manager.getTransaction().commit();
+    manager.clear();
+
+    final UserDevfileImpl userDevfile = TestObjectGenerator.createUserDevfile();
     // Persist the userdevfule
     manager.getTransaction().begin();
     manager.persist(userDevfile);

@@ -57,7 +57,8 @@ public class UserDevfilePermissionsFilter extends CheMethodInvokerFilter {
       case "delete":
         doCheckPermission(DOMAIN_ID, ((String) arguments[0]), DELETE);
         break;
-      case "create":
+      case "createFromDevfile":
+      case "createFromUserDevfile":
       case "getUserDevfiles":
       case "getSchema":
         return;

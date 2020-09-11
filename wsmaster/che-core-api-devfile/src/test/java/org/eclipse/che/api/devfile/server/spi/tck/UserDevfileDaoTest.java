@@ -30,7 +30,6 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.stream.Stream;
 import javax.inject.Inject;
-import org.eclipse.che.account.spi.AccountDao;
 import org.eclipse.che.account.spi.AccountImpl;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
@@ -78,8 +77,6 @@ public class UserDevfileDaoTest {
   @Inject private TckRepository<UserDevfileImpl> devfileTckRepository;
 
   @Inject private TckRepository<UserImpl> userTckRepository;
-
-  @Inject private AccountDao accountDao;
 
   @Inject private TckRepository<AccountImpl> accountRepo;
 

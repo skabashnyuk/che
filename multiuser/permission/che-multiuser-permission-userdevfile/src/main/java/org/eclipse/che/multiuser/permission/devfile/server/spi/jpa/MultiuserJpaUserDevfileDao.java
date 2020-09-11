@@ -14,12 +14,16 @@ package org.eclipse.che.multiuser.permission.devfile.server.spi.jpa;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import java.util.List;
+import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
+import org.eclipse.che.account.spi.AccountDao;
 import org.eclipse.che.api.core.Page;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.model.workspace.devfile.UserDevfile;
+import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.devfile.server.jpa.JpaUserDevfileDao;
 import org.eclipse.che.api.devfile.server.model.impl.UserDevfileImpl;
 import org.eclipse.che.api.devfile.server.spi.UserDevfileDao;
@@ -31,11 +35,13 @@ import org.eclipse.che.commons.subject.Subject;
 @Singleton
 public class MultiuserJpaUserDevfileDao extends JpaUserDevfileDao {
 
-    public MultiuserJpaUserDevfileDao() {
-        super(managerProvider, accountDao);
-    }
+  @Inject
+  public MultiuserJpaUserDevfileDao(
+      Provider<EntityManager> managerProvider, AccountDao accountDao, EventService eventService) {
+    super(managerProvider, accountDao, eventService);
+  }
 
-    @Override
+  @Override
   public Page<UserDevfile> getDevfiles(
       int maxItems,
       int skipCount,

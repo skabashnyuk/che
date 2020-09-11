@@ -11,28 +11,11 @@
  */
 package org.eclipse.che.api.devfile.server.jpa;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static java.lang.String.format;
-import static java.util.Collections.emptyList;
-import static java.util.Objects.requireNonNull;
-import static java.util.stream.Collectors.toList;
-import static org.eclipse.che.api.devfile.server.jpa.JpaUserDevfileDao.UserDevfileSearchQueryBuilder.newBuilder;
-
 import com.google.common.annotations.Beta;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.persist.Transactional;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.StringJoiner;
-import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
-import javax.persistence.EntityManager;
-import javax.persistence.TypedQuery;
+import org.eclipse.che.account.event.BeforeAccountRemovedEvent;
 import org.eclipse.che.account.shared.model.Account;
 import org.eclipse.che.account.spi.AccountDao;
 import org.eclipse.che.api.core.ConflictException;
@@ -41,14 +24,37 @@ import org.eclipse.che.api.core.Page;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.model.workspace.devfile.UserDevfile;
 import org.eclipse.che.api.core.notification.EventService;
+import org.eclipse.che.api.devfile.server.UserDevfileManager;
 import org.eclipse.che.api.devfile.server.event.BeforeDevfileRemovedEvent;
 import org.eclipse.che.api.devfile.server.model.impl.UserDevfileImpl;
 import org.eclipse.che.api.devfile.server.spi.UserDevfileDao;
 import org.eclipse.che.commons.lang.Pair;
+import org.eclipse.che.core.db.cascade.CascadeEventSubscriber;
 import org.eclipse.che.core.db.jpa.DuplicateKeyException;
 import org.eclipse.che.core.db.jpa.IntegrityConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
+import javax.persistence.EntityManager;
+import javax.persistence.TypedQuery;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.StringJoiner;
+import java.util.stream.Collectors;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static java.lang.String.format;
+import static java.util.Collections.emptyList;
+import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.toList;
+import static org.eclipse.che.api.devfile.server.jpa.JpaUserDevfileDao.UserDevfileSearchQueryBuilder.newBuilder;
 
 /** JPA based implementation of {@link UserDevfileDao}. */
 @Singleton
@@ -56,9 +62,9 @@ import org.slf4j.LoggerFactory;
 public class JpaUserDevfileDao implements UserDevfileDao {
   private static final Logger LOG = LoggerFactory.getLogger(JpaUserDevfileDao.class);
 
-  private final Provider<EntityManager> managerProvider;
-  private final AccountDao accountDao;
-  private final EventService eventService;
+  protected final Provider<EntityManager> managerProvider;
+  protected final AccountDao accountDao;
+  protected final EventService eventService;
 
   public static final List<Pair<String, String>> DEFAULT_ORDER =
       ImmutableList.of(new Pair<>("id", "ASC"));
@@ -342,6 +348,36 @@ public class JpaUserDevfileDao implements UserDevfileDao {
               .setMaxResults(maxItems);
       params.forEach((k, v) -> typedQuery.setParameter(k, v));
       return typedQuery;
+    }
+  }
+
+
+  @Singleton
+  public static class RemoveUserDevfileBeforeAccountRemovedEventSubscriber
+          extends CascadeEventSubscriber<BeforeAccountRemovedEvent> {
+
+    @Inject private EventService eventService;
+    @Inject private UserDevfileManager userDevfileManager;
+
+    @PostConstruct
+    public void subscribe() {
+      eventService.subscribe(this, BeforeAccountRemovedEvent.class);
+    }
+
+    @PreDestroy
+    public void unsubscribe() {
+      eventService.unsubscribe(this, BeforeAccountRemovedEvent.class);
+    }
+
+    @Override
+    public void onCascadeEvent(BeforeAccountRemovedEvent event) throws Exception {
+//      for (WorkspaceImpl workspace :
+//              iterate(
+//                      (maxItems, skipCount) ->
+//                              workspaceManager.getByNamespace(
+//                                      event.getAccount().getName(), false, maxItems, skipCount))) {
+//        workspaceManager.removeWorkspace(workspace.getId());
+//      }
     }
   }
 }

@@ -12,7 +12,9 @@
 package org.eclipse.che.multiuser.permission.devfile.server.spi.jpa;
 
 import com.google.inject.TypeLiteral;
+import org.eclipse.che.account.spi.AccountDao;
 import org.eclipse.che.account.spi.AccountImpl;
+import org.eclipse.che.account.spi.jpa.JpaAccountDao;
 import org.eclipse.che.api.devfile.server.model.impl.UserDevfileImpl;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.workspace.server.devfile.SerializableConverter;
@@ -97,12 +99,15 @@ public class JpaTckModule extends TckModule {
         .to(UserDevfilePermissionDaoTest.TestDomain.class);
 
     bind(UserDevfilePermissionDao.class).to(JpaUserDevfilePermissionDao.class);
+    bind(AccountDao.class).to(JpaAccountDao.class);
     bind(new TypeLiteral<TckRepository<UserDevfilePermission>>() {})
         .toInstance(new JpaTckRepository<>(UserDevfilePermission.class));
     bind(new TypeLiteral<TckRepository<UserImpl>>() {})
         .toInstance(new JpaTckRepository<>(UserImpl.class));
     bind(new TypeLiteral<TckRepository<UserDevfileImpl>>() {})
         .toInstance(new JpaTckRepository<>(UserDevfileImpl.class));
+    bind(new TypeLiteral<TckRepository<AccountImpl>>() {})
+        .toInstance(new JpaTckRepository<>(AccountImpl.class));
 
     bind(SchemaInitializer.class)
         .toInstance(new FlywaySchemaInitializer(server.getDataSource(), "che-schema"));

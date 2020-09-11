@@ -13,6 +13,7 @@ package org.eclipse.che.multiuser.permission.devfile.server.model.impl;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import javax.persistence.CollectionTable;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
@@ -126,5 +127,20 @@ public class UserDevfilePermissionImpl extends AbstractPermissions
         + actions
         + "} "
         + super.toString();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
+    UserDevfilePermissionImpl that = (UserDevfilePermissionImpl) o;
+    return Objects.equals(userDevfileId, that.userDevfileId)
+        && Objects.equals(actions, that.actions);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(super.hashCode(), userDevfileId, actions);
   }
 }

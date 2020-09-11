@@ -12,7 +12,7 @@
 package org.eclipse.che.multiuser.permission.devfile.server.spi.tck;
 
 import static org.eclipse.che.commons.lang.NameGenerator.generate;
-import static org.eclipse.che.multiuser.permission.devfile.server.TestObjectGenerator.createDevfile;
+import static org.eclipse.che.multiuser.permission.devfile.server.TestObjectGenerator.createUserDevfile;
 import static org.eclipse.che.multiuser.permission.devfile.server.UserDevfileDomain.DELETE;
 import static org.eclipse.che.multiuser.permission.devfile.server.UserDevfileDomain.READ;
 import static org.eclipse.che.multiuser.permission.devfile.server.UserDevfileDomain.UPDATE;
@@ -29,6 +29,7 @@ import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
+import org.eclipse.che.account.spi.AccountImpl;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.Page;
 import org.eclipse.che.api.core.ServerException;
@@ -38,6 +39,7 @@ import org.eclipse.che.commons.test.tck.TckListener;
 import org.eclipse.che.commons.test.tck.repository.TckRepository;
 import org.eclipse.che.commons.test.tck.repository.TckRepositoryException;
 import org.eclipse.che.multiuser.api.permission.server.AbstractPermissionsDomain;
+import org.eclipse.che.multiuser.permission.devfile.server.TestObjectGenerator;
 import org.eclipse.che.multiuser.permission.devfile.server.UserDevfileDomain;
 import org.eclipse.che.multiuser.permission.devfile.server.model.UserDevfilePermission;
 import org.eclipse.che.multiuser.permission.devfile.server.model.impl.UserDevfilePermissionImpl;
@@ -61,10 +63,13 @@ public class UserDevfilePermissionDaoTest {
 
   @Inject private TckRepository<UserDevfileImpl> devfileRepository;
 
+  @Inject private TckRepository<AccountImpl> accountRepository;
+
   UserDevfilePermissionImpl[] permissions;
 
   @BeforeMethod
   public void setUp() throws TckRepositoryException {
+    accountRepository.createAll(ImmutableList.of(TestObjectGenerator.TEST_ACCOUNT));
     permissions =
         new UserDevfilePermissionImpl[] {
           new UserDevfilePermissionImpl(
@@ -86,11 +91,11 @@ public class UserDevfilePermissionDaoTest {
 
     devfileRepository.createAll(
         ImmutableList.of(
-            new UserDevfileImpl("devfile_id1", createDevfile(generate("name", 6))),
-            new UserDevfileImpl("devfile_id2", createDevfile(generate("name", 6))),
-            new UserDevfileImpl("devfile_id3", createDevfile(generate("name", 6))),
-            new UserDevfileImpl("devfile_id4", createDevfile(generate("name", 6))),
-            new UserDevfileImpl("devfile_id5", createDevfile(generate("name", 6)))));
+            createUserDevfile("devfile_id1", generate("name", 6)),
+            createUserDevfile("devfile_id2", generate("name", 6)),
+            createUserDevfile("devfile_id3", generate("name", 6)),
+            createUserDevfile("devfile_id4", generate("name", 6)),
+            createUserDevfile("devfile_id5", generate("name", 6))));
 
     permissionTckRepository.createAll(
         Stream.of(permissions).map(UserDevfilePermissionImpl::new).collect(Collectors.toList()));
@@ -100,6 +105,7 @@ public class UserDevfilePermissionDaoTest {
   public void cleanUp() throws TckRepositoryException {
     permissionTckRepository.removeAll();
     devfileRepository.removeAll();
+    accountRepository.removeAll();
     userRepository.removeAll();
   }
 

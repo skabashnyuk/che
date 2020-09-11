@@ -125,8 +125,8 @@ public final class TestObjectsFactory {
     return new SignatureKeyPairImpl(workspaceId, pair.getPublic(), pair.getPrivate());
   }
 
-  public static UserDevfileImpl createUserDevfile(String id, String name) {
-    return new UserDevfileImpl(id, createDevfile(name));
+  public static UserDevfileImpl createUserDevfile(String id, String name, Account account) {
+    return new UserDevfileImpl(id, account, name, "descr", createDevfile(name));
   }
 
   public static DevfileImpl createDevfile(String name) {

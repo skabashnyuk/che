@@ -12,7 +12,6 @@
 package org.eclipse.che.multiuser.permission.devfile.server.spi.jpa;
 
 import static org.eclipse.che.commons.lang.NameGenerator.generate;
-import static org.eclipse.che.multiuser.permission.devfile.server.TestObjectGenerator.createDevfile;
 import static org.testng.AssertJUnit.assertEquals;
 
 import com.google.inject.Guice;
@@ -20,10 +19,12 @@ import com.google.inject.Injector;
 import java.util.Arrays;
 import java.util.stream.Stream;
 import javax.persistence.EntityManager;
+import org.eclipse.che.account.spi.AccountImpl;
 import org.eclipse.che.api.devfile.server.jpa.JpaUserDevfileDao;
 import org.eclipse.che.api.devfile.server.model.impl.UserDevfileImpl;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.commons.test.tck.TckResourcesCleaner;
+import org.eclipse.che.multiuser.permission.devfile.server.TestObjectGenerator;
 import org.eclipse.che.multiuser.permission.devfile.server.model.impl.UserDevfilePermissionImpl;
 import org.eclipse.che.multiuser.permission.devfile.server.spi.jpa.JpaUserDevfilePermissionDao.RemoveUserDevfilePermissionsBeforeUserDevfuleRemovedEventSubscriber;
 import org.testng.annotations.AfterClass;
@@ -54,7 +55,7 @@ public class RemoveUserDevfilePermissionsBeforeUserDevfileRemovedEventSubscriber
           new UserImpl("user2", "user2@com.com", "usr2")
         };
 
-    userDevfile = new UserDevfileImpl("devfile_id1", createDevfile(generate("name", 6)));
+    userDevfile = TestObjectGenerator.createUserDevfile("devfile_id1", generate("name", 6));
 
     userDevfilePermissions =
         new UserDevfilePermissionImpl[] {
@@ -80,6 +81,7 @@ public class RemoveUserDevfilePermissionsBeforeUserDevfileRemovedEventSubscriber
     manager.getTransaction().begin();
     manager.persist(userDevfile);
     Stream.of(users).forEach(manager::persist);
+    manager.persist(TestObjectGenerator.TEST_ACCOUNT);
     Stream.of(userDevfilePermissions).forEach(manager::persist);
     manager.getTransaction().commit();
     manager.clear();
@@ -99,6 +101,10 @@ public class RemoveUserDevfilePermissionsBeforeUserDevfileRemovedEventSubscriber
         .getResultList()
         .forEach(manager::remove);
 
+    manager
+        .createQuery("SELECT a FROM Account a", AccountImpl.class)
+        .getResultList()
+        .forEach(manager::remove);
     manager
         .createQuery("SELECT u FROM Usr u", UserImpl.class)
         .getResultList()

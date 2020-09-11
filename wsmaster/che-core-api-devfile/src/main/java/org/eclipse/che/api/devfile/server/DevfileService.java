@@ -148,7 +148,7 @@ public class DevfileService extends Service {
                 + "(e.g. The devfile with such name already exists)"),
     @ApiResponse(code = 500, message = "Internal server error occurred")
   })
-  public Response createUserDEvfile(
+  public Response createFromUserDevfile(
       @ApiParam(value = "The devfile to create", required = true) UserDevfileDto userDevfileDto)
       throws ConflictException, BadRequestException, ForbiddenException, NotFoundException,
           ServerException {

@@ -84,7 +84,8 @@ public class UserDevfilePermissionsFilterTest {
 
   @Mock private DevfileService devfileService;
   private UserDevfileDto userDevfileDto = TestObjectGenerator.createUserDevfileDto();
-  private UserDevfileImpl userDevfile = new UserDevfileImpl(userDevfileDto);
+  private UserDevfileImpl userDevfile =
+      new UserDevfileImpl(userDevfileDto, TestObjectGenerator.TEST_ACCOUNT);
   //
   @BeforeMethod
   public void setUp() throws Exception {

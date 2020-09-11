@@ -485,7 +485,8 @@ public class JpaEntitiesCascadeRemovalTest {
         childOrganization.getId(),
         singletonList(new ResourceImpl(RamResourceType.ID, 1024, RamResourceType.UNIT)));
 
-    userDevfileDao.create(devfile = TestObjectsFactory.createUserDevfile("id-dev1", "devfile1"));
+    userDevfileDao.create(
+        devfile = TestObjectsFactory.createUserDevfile("id-dev1", "devfile1", account));
     userDevfilePermissionDao.store(
         devfilePermission =
             new UserDevfilePermissionImpl(

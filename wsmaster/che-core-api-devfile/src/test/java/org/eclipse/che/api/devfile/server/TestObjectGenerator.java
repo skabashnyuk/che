@@ -16,6 +16,7 @@ import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 
 import com.google.common.collect.ImmutableMap;
+import org.eclipse.che.account.shared.model.Account;
 import org.eclipse.che.account.spi.AccountImpl;
 import org.eclipse.che.api.devfile.server.model.impl.UserDevfileImpl;
 import org.eclipse.che.api.devfile.shared.dto.UserDevfileDto;
@@ -57,6 +58,10 @@ public class TestObjectGenerator {
 
   public static UserDevfileImpl createUserDevfile(String id, String name) {
     return new UserDevfileImpl(id, TEST_ACCOUNT, name, "devfile description", createDevfile(name));
+  }
+
+  public static UserDevfileImpl createUserDevfile(String id, Account account, String name) {
+    return new UserDevfileImpl(id, account, name, "devfile description", createDevfile(name));
   }
 
   public static DevfileImpl createDevfile(String name) {

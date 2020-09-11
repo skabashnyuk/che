@@ -156,7 +156,7 @@ public class UserDevfileImpl implements UserDevfile {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     UserDevfileImpl that = (UserDevfileImpl) o;
-    return id.equals(that.id)
+    return Objects.equals(id, that.id)
         && devfile.equals(that.devfile)
         && name.equals(that.name)
         && Objects.equals(description, that.description)
