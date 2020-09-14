@@ -14,15 +14,17 @@ package org.eclipse.che.multiuser.permission.devfile.server.jpa;
 import com.google.inject.AbstractModule;
 import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.Multibinder;
+import org.eclipse.che.api.devfile.server.jpa.JpaUserDevfileDao.RemoveUserDevfileBeforeAccountRemovedEventSubscriber;
 import org.eclipse.che.api.devfile.server.spi.UserDevfileDao;
 import org.eclipse.che.multiuser.api.permission.server.AbstractPermissionsDomain;
 import org.eclipse.che.multiuser.api.permission.server.model.impl.AbstractPermissions;
 import org.eclipse.che.multiuser.api.permission.server.spi.PermissionsDao;
 import org.eclipse.che.multiuser.permission.devfile.server.UserDevfileDomain;
-import org.eclipse.che.multiuser.permission.devfile.server.listener.RemoveUserDevfileOnLastUserRemovedEventSubscriber;
 import org.eclipse.che.multiuser.permission.devfile.server.model.impl.UserDevfilePermissionImpl;
 import org.eclipse.che.multiuser.permission.devfile.server.spi.UserDevfilePermissionDao;
 import org.eclipse.che.multiuser.permission.devfile.server.spi.jpa.JpaUserDevfilePermissionDao;
+import org.eclipse.che.multiuser.permission.devfile.server.spi.jpa.JpaUserDevfilePermissionDao.RemoveUserDevfilePermissionsBeforeUserDevfuleRemovedEventSubscriber;
+import org.eclipse.che.multiuser.permission.devfile.server.spi.jpa.JpaUserDevfilePermissionDao.RemoveUserDevfilePermissionsBeforeUserRemovedEventSubscriber;
 import org.eclipse.che.multiuser.permission.devfile.server.spi.jpa.MultiuserJpaUserDevfileDao;
 
 public class MultiuserUserDevfileJpaModule extends AbstractModule {
@@ -31,11 +33,11 @@ public class MultiuserUserDevfileJpaModule extends AbstractModule {
   protected void configure() {
     bind(UserDevfilePermissionDao.class).to(JpaUserDevfilePermissionDao.class);
     bind(UserDevfileDao.class).to(MultiuserJpaUserDevfileDao.class);
-    bind(JpaUserDevfilePermissionDao
-            .RemoveUserDevfilePermissionsBeforeUserDevfuleRemovedEventSubscriber.class)
-        .asEagerSingleton();
 
-    bind(RemoveUserDevfileOnLastUserRemovedEventSubscriber.class).asEagerSingleton();
+    bind(RemoveUserDevfileBeforeAccountRemovedEventSubscriber.class).asEagerSingleton();
+    bind(RemoveUserDevfilePermissionsBeforeUserDevfuleRemovedEventSubscriber.class)
+        .asEagerSingleton();
+    bind(RemoveUserDevfilePermissionsBeforeUserRemovedEventSubscriber.class).asEagerSingleton();
 
     bind(new TypeLiteral<AbstractPermissionsDomain<UserDevfilePermissionImpl>>() {})
         .to(UserDevfileDomain.class);

@@ -68,6 +68,18 @@ public interface UserDevfileDao {
   Optional<UserDevfile> getById(String id) throws ServerException;
 
   /**
+   * Gets list of UserDevfiles in given namespace.
+   *
+   * @param namespace devfiles namespace
+   * @return list of devfiles in given namespace. Always returns list(even when there are no devfile
+   *     in given namespace), never null
+   * @throws NullPointerException when {@code namespace} is null
+   * @throws ServerException when any other error occurs during workspaces fetching
+   */
+  Page<UserDevfile> getByNamespace(String namespace, int maxItems, long skipCount)
+      throws ServerException;
+
+  /**
    * Gets all devfiles which user can read filtered by given parameters in a given order
    *
    * @param maxItems the maximum number of workspaces to return

@@ -14,7 +14,6 @@ package org.eclipse.che.api.devfile.server.spi.tck;
 import static java.lang.Math.min;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
-import static org.eclipse.che.api.devfile.server.TestObjectGenerator.TEST_ACCOUNT;
 import static org.eclipse.che.api.devfile.server.TestObjectGenerator.createUserDevfile;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -49,7 +48,6 @@ import org.eclipse.che.api.workspace.server.model.impl.devfile.DevfileImpl;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.MetadataImpl;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.ProjectImpl;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.SourceImpl;
-import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.lang.NameGenerator;
 import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.commons.test.tck.TckListener;
@@ -63,12 +61,13 @@ import org.testng.annotations.Test;
 @Listeners(TckListener.class)
 @Test(suiteName = UserDevfileDaoTest.SUITE_NAME)
 public class UserDevfileDaoTest {
-  public static final String CURRENT_USER_ID =
-      EnvironmentContext.getCurrent().getSubject().getUserId();
+
   public static final String SUITE_NAME = "DevfileDaoTck";
   private static final int ENTRY_COUNT = 10;
+  private static final int COUNT_OF_ACCOUNTS = 6;
 
   private UserDevfileImpl[] devfiles;
+  private AccountImpl[] accounts;
 
   @Inject private EventService eventService;
 
@@ -82,14 +81,21 @@ public class UserDevfileDaoTest {
 
   @BeforeMethod
   public void setUp() throws Exception {
-    accountRepo.createAll(ImmutableList.of(TEST_ACCOUNT));
+    accounts = new AccountImpl[COUNT_OF_ACCOUNTS];
+    for (int i = 0; i < COUNT_OF_ACCOUNTS; i++) {
+      accounts[i] = new AccountImpl("accountId" + i, "accountName" + i, "test");
+    }
+
     devfiles = new UserDevfileImpl[ENTRY_COUNT];
     for (int i = 0; i < ENTRY_COUNT; i++) {
+      AccountImpl account = accounts[i / 2];
       devfiles[i] =
           createUserDevfile(
               NameGenerator.generate("id-" + i + "-", 6),
+              account,
               NameGenerator.generate("devfileName-" + i, 6));
     }
+    accountRepo.createAll(Stream.of(accounts).map(AccountImpl::new).collect(toList()));
     devfileTckRepository.createAll(Stream.of(devfiles).map(UserDevfileImpl::new).collect(toList()));
   }
 
@@ -108,7 +114,9 @@ public class UserDevfileDaoTest {
 
   @Test(dependsOnMethods = "shouldGetUserDevfileById")
   public void shouldCreateUserDevfile() throws Exception {
-    final UserDevfileImpl devfile = createUserDevfile();
+    // given
+    final UserDevfileImpl devfile = createUserDevfile(accounts[0]);
+    // when
     userDevfileDaoDao.create(devfile);
 
     assertEquals(
@@ -123,7 +131,7 @@ public class UserDevfileDaoTest {
   @Test(expectedExceptions = ConflictException.class)
   public void shouldThrowConflictExceptionWhenCreatingUserDevfileWithExistingId() throws Exception {
     // given
-    final UserDevfileImpl devfile = createUserDevfile();
+    final UserDevfileImpl devfile = createUserDevfile(accounts[0]);
     final UserDevfileImpl existing = devfiles[0];
     devfile.setId(existing.getId());
     // when
@@ -446,5 +454,28 @@ public class UserDevfileDaoTest {
             new Pair<>("meta", "DesC"),
             new Pair<>("id", "bla")));
     // then
+  }
+
+  @Test
+  public void shouldGetDevfilesByNamespace() throws Exception {
+    final UserDevfileImpl devfile1 = devfiles[0];
+    final UserDevfileImpl devfile2 = devfiles[1];
+    assertEquals(devfile1.getNamespace(), devfile2.getNamespace(), "Namespaces must be the same");
+
+    final Page<UserDevfile> found = userDevfileDaoDao.getByNamespace(devfile1.getNamespace(), 6, 0);
+
+    assertEquals(found.getTotalItemsCount(), 2);
+    assertEquals(found.getItemsCount(), 2);
+    assertEquals(new HashSet<>(found.getItems()), new HashSet<>(asList(devfile1, devfile2)));
+  }
+
+  @Test
+  public void emptyListShouldBeReturnedWhenThereAreNoDevfilesInGivenNamespace() throws Exception {
+    assertTrue(userDevfileDaoDao.getByNamespace("non-existing-namespace", 30, 0).isEmpty());
+  }
+
+  @Test(expectedExceptions = NullPointerException.class)
+  public void shouldThrowNpeWhenGettingDevfilesByNullNamespace() throws Exception {
+    userDevfileDaoDao.getByNamespace(null, 30, 0);
   }
 }

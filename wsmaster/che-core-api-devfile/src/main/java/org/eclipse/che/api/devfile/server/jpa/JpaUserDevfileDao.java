@@ -11,10 +11,31 @@
  */
 package org.eclipse.che.api.devfile.server.jpa;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static java.lang.String.format;
+import static java.util.Collections.emptyList;
+import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.toList;
+import static org.eclipse.che.api.core.Pages.iterate;
+import static org.eclipse.che.api.devfile.server.jpa.JpaUserDevfileDao.UserDevfileSearchQueryBuilder.newBuilder;
+
 import com.google.common.annotations.Beta;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.persist.Transactional;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.StringJoiner;
+import java.util.stream.Collectors;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
+import javax.persistence.EntityManager;
+import javax.persistence.TypedQuery;
 import org.eclipse.che.account.event.BeforeAccountRemovedEvent;
 import org.eclipse.che.account.shared.model.Account;
 import org.eclipse.che.account.spi.AccountDao;
@@ -34,27 +55,6 @@ import org.eclipse.che.core.db.jpa.DuplicateKeyException;
 import org.eclipse.che.core.db.jpa.IntegrityConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
-import javax.persistence.EntityManager;
-import javax.persistence.TypedQuery;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.StringJoiner;
-import java.util.stream.Collectors;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static java.lang.String.format;
-import static java.util.Collections.emptyList;
-import static java.util.Objects.requireNonNull;
-import static java.util.stream.Collectors.toList;
-import static org.eclipse.che.api.devfile.server.jpa.JpaUserDevfileDao.UserDevfileSearchQueryBuilder.newBuilder;
 
 /** JPA based implementation of {@link UserDevfileDao}. */
 @Singleton
@@ -138,6 +138,34 @@ public class JpaUserDevfileDao implements UserDevfileDao {
       return Optional.of(new UserDevfileImpl(devfile));
     } catch (RuntimeException ex) {
       throw new ServerException(ex.getLocalizedMessage(), ex);
+    }
+  }
+
+  @Transactional(rollbackOn = {ServerException.class, RuntimeException.class})
+  @Override
+  public Page<UserDevfile> getByNamespace(String namespace, int maxItems, long skipCount)
+      throws ServerException {
+    requireNonNull(namespace, "Required non-null namespace");
+    try {
+      final EntityManager manager = managerProvider.get();
+      final List<UserDevfileImpl> list =
+          manager
+              .createNamedQuery("UserDevfile.getByNamespace", UserDevfileImpl.class)
+              .setParameter("namespace", namespace)
+              .setMaxResults(maxItems)
+              .setFirstResult((int) skipCount)
+              .getResultList()
+              .stream()
+              .map(UserDevfileImpl::new)
+              .collect(Collectors.toList());
+      final long count =
+          manager
+              .createNamedQuery("UserDevfile.getByNamespaceCount", Long.class)
+              .setParameter("namespace", namespace)
+              .getSingleResult();
+      return new Page<>(list, skipCount, maxItems, count);
+    } catch (RuntimeException x) {
+      throw new ServerException(x.getLocalizedMessage(), x);
     }
   }
 
@@ -351,10 +379,9 @@ public class JpaUserDevfileDao implements UserDevfileDao {
     }
   }
 
-
   @Singleton
   public static class RemoveUserDevfileBeforeAccountRemovedEventSubscriber
-          extends CascadeEventSubscriber<BeforeAccountRemovedEvent> {
+      extends CascadeEventSubscriber<BeforeAccountRemovedEvent> {
 
     @Inject private EventService eventService;
     @Inject private UserDevfileManager userDevfileManager;
@@ -371,13 +398,13 @@ public class JpaUserDevfileDao implements UserDevfileDao {
 
     @Override
     public void onCascadeEvent(BeforeAccountRemovedEvent event) throws Exception {
-//      for (WorkspaceImpl workspace :
-//              iterate(
-//                      (maxItems, skipCount) ->
-//                              workspaceManager.getByNamespace(
-//                                      event.getAccount().getName(), false, maxItems, skipCount))) {
-//        workspaceManager.removeWorkspace(workspace.getId());
-//      }
+      for (UserDevfile userDevfile :
+          iterate(
+              (maxItems, skipCount) ->
+                  userDevfileManager.getByNamespace(
+                      event.getAccount().getName(), maxItems, skipCount))) {
+        userDevfileManager.removeUserDevfile(userDevfile.getId());
+      }
     }
   }
 }

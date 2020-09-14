@@ -64,6 +64,11 @@ public class TestObjectGenerator {
     return new UserDevfileImpl(id, account, name, "devfile description", createDevfile(name));
   }
 
+  public static UserDevfileImpl createUserDevfile(Account account) {
+    return createUserDevfile(
+        NameGenerator.generate("id", 6), account, NameGenerator.generate("name", 6));
+  }
+
   public static DevfileImpl createDevfile(String name) {
     return createDevfile(name, "rosetta-");
   }

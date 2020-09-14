@@ -20,5 +20,7 @@ public class UserDevfileJpaModule extends AbstractModule {
   @Override
   protected void configure() {
     bind(UserDevfileDao.class).to(JpaUserDevfileDao.class);
+    bind(JpaUserDevfileDao.RemoveUserDevfileBeforeAccountRemovedEventSubscriber.class)
+        .asEagerSingleton();
   }
 }

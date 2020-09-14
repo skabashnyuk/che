@@ -113,9 +113,9 @@ import org.eclipse.che.multiuser.organization.spi.MemberDao;
 import org.eclipse.che.multiuser.organization.spi.impl.MemberImpl;
 import org.eclipse.che.multiuser.organization.spi.impl.OrganizationImpl;
 import org.eclipse.che.multiuser.permission.devfile.server.jpa.MultiuserUserDevfileJpaModule;
-import org.eclipse.che.multiuser.permission.devfile.server.listener.RemoveUserDevfileOnLastUserRemovedEventSubscriber;
 import org.eclipse.che.multiuser.permission.devfile.server.model.impl.UserDevfilePermissionImpl;
 import org.eclipse.che.multiuser.permission.devfile.server.spi.UserDevfilePermissionDao;
+import org.eclipse.che.multiuser.permission.devfile.server.spi.jpa.JpaUserDevfilePermissionDao.RemoveUserDevfilePermissionsBeforeUserRemovedEventSubscriber;
 import org.eclipse.che.multiuser.permission.workspace.server.jpa.MultiuserWorkspaceJpaModule;
 import org.eclipse.che.multiuser.permission.workspace.server.spi.WorkerDao;
 import org.eclipse.che.multiuser.resource.api.AvailableResourcesProvider;
@@ -353,9 +353,11 @@ public class JpaEntitiesCascadeRemovalTest {
     assertTrue(preferenceDao.getPreferences(user.getId()).isEmpty());
     assertTrue(sshDao.get(user.getId()).isEmpty());
     assertTrue(workspaceDao.getByNamespace(account.getName(), 30, 0).isEmpty());
+    assertTrue(userDevfileDao.getByNamespace(account.getName(), 30, 0).isEmpty());
     assertTrue(factoryDao.getByUser(user.getId(), 30, 0).isEmpty());
     // Check workers and parent entity is removed
     assertTrue(workspaceDao.getByNamespace(user2.getId(), 30, 0).isEmpty());
+    assertTrue(userDevfileDao.getByNamespace(user2.getId(), 30, 0).isEmpty());
     assertEquals(workerDao.getWorkers(workspace3.getId(), 1, 0).getTotalItemsCount(), 0);
     assertNull(
         notFoundToNull(
@@ -430,7 +432,10 @@ public class JpaEntitiesCascadeRemovalTest {
   public Object[][] beforeRemoveActions() {
     return new Class[][] {
       {RemoveOrganizationOnLastUserRemovedEventSubscriber.class, BeforeUserRemovedEvent.class},
-      {RemoveUserDevfileOnLastUserRemovedEventSubscriber.class, BeforeUserRemovedEvent.class}
+      {
+        RemoveUserDevfilePermissionsBeforeUserRemovedEventSubscriber.class,
+        BeforeUserRemovedEvent.class
+      }
     };
   }
 

@@ -101,6 +101,22 @@ public class UserDevfileManager {
   }
 
   /**
+   * Gets list of UserDevfiles in given namespace.
+   *
+   * @param namespace devfiles namespace
+   * @return list of devfiles in given namespace. Always returns list(even when there are no devfile
+   *     in given namespace), never null
+   * @throws NullPointerException when {@code namespace} is null
+   * @throws ServerException when any other error occurs during workspaces fetching
+   */
+  public Page<UserDevfile> getByNamespace(String namespace, int maxItems, long skipCount)
+      throws ServerException {
+    requireNonNull(namespace, "Required non-null namespace");
+    final Page<UserDevfile> devfilesPage =
+        userDevfileDao.getByNamespace(namespace, maxItems, skipCount);
+    return devfilesPage;
+  }
+  /**
    * Updates an existing user devfile in accordance to the new configuration.
    *
    * <p>Note: Replace strategy is used for user devfile update, it means that existing devfile data
