@@ -17,6 +17,7 @@ import static java.util.stream.Collectors.toList;
 import static org.eclipse.che.api.devfile.server.TestObjectGenerator.createUserDevfile;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
@@ -135,6 +136,26 @@ public class UserDevfileDaoTest {
     Optional<UserDevfile> devfileOptional = userDevfileDaoDao.getById(devfile.getId());
     assertTrue(devfileOptional.isPresent());
     assertNull(devfileOptional.get().getDescription());
+    assertEquals(devfileOptional, Optional.of(new UserDevfileImpl(devfile)));
+  }
+
+  @Test
+  public void shouldCreateUserDevfileWithEmptyMataName() throws Exception {
+    // given
+    final UserDevfileImpl devfile = createUserDevfile(accounts[0]);
+    DevfileImpl newDevfile = new DevfileImpl(devfile.getDevfile());
+    MetadataImpl newMeta = new MetadataImpl();
+    newMeta.setGenerateName("gener-");
+    newDevfile.setMetadata(newMeta);
+    devfile.setDevfile(newDevfile);
+    // when
+    userDevfileDaoDao.create(devfile);
+
+    Optional<UserDevfile> devfileOptional = userDevfileDaoDao.getById(devfile.getId());
+    assertTrue(devfileOptional.isPresent());
+    UserDevfile actual = devfileOptional.get();
+    assertNull(actual.getDevfile().getMetadata().getName());
+    assertNotNull(actual.getDevfile().getMetadata().getGenerateName());
     assertEquals(devfileOptional, Optional.of(new UserDevfileImpl(devfile)));
   }
 
@@ -365,7 +386,7 @@ public class UserDevfileDaoTest {
             devfiles.length,
             0,
             Collections.emptyList(),
-            ImmutableList.of(new Pair<>("devfile.metadata.name", "asc")));
+            ImmutableList.of(new Pair<>("name", "asc")));
     // then
     assertEquals(result.getItems().stream().toArray(UserDevfileImpl[]::new), expected);
   }
@@ -454,7 +475,7 @@ public class UserDevfileDaoTest {
       expectedExceptions = IllegalArgumentException.class,
       expectedExceptionsMessageRegExp =
           "Invalid sort order direction\\. Possible values 'asc' or 'desc'\\."
-              + " But got: \\[\\{first=meta, second=ddd}, \\{first=id, second=bla}]")
+              + " But got: \\[\\{first=name, second=ddd}, \\{first=id, second=bla}]")
   public void shouldFailOnInvalidSortOrder()
       throws ServerException, NotFoundException, ConflictException {
     // given
@@ -464,9 +485,9 @@ public class UserDevfileDaoTest {
         4,
         Collections.emptyList(),
         ImmutableList.of(
-            new Pair<>("devfile.metadata.name", "asc"),
-            new Pair<>("meta", "ddd"),
-            new Pair<>("meta", "DesC"),
+            new Pair<>("id", "asc"),
+            new Pair<>("name", "ddd"),
+            new Pair<>("name", "DesC"),
             new Pair<>("id", "bla")));
     // then
   }

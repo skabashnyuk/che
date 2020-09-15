@@ -22,15 +22,13 @@ import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToOne;
-import javax.persistence.PostLoad;
-import javax.persistence.PrePersist;
-import javax.persistence.PreUpdate;
 import javax.persistence.Table;
 import org.eclipse.che.account.shared.model.Account;
 import org.eclipse.che.account.spi.AccountImpl;
 import org.eclipse.che.api.core.model.workspace.devfile.Devfile;
 import org.eclipse.che.api.core.model.workspace.devfile.UserDevfile;
 import org.eclipse.che.api.workspace.server.model.impl.devfile.DevfileImpl;
+import org.eclipse.che.api.workspace.server.model.impl.devfile.MetadataImpl;
 
 @Entity(name = "UserDevfile")
 @Table(name = "userdevfile")
@@ -47,6 +45,8 @@ import org.eclipse.che.api.workspace.server.model.impl.devfile.DevfileImpl;
 @Beta
 public class UserDevfileImpl implements UserDevfile {
 
+  private static final MetadataImpl FAKE_META = new MetadataImpl("name");
+
   @Id
   @Column(name = "id", nullable = false)
   private String id;
@@ -55,8 +55,11 @@ public class UserDevfileImpl implements UserDevfile {
   @JoinColumn(name = "devfile_id")
   private DevfileImpl devfile;
 
-  @Column(name = "generated_name")
-  private String generateName;
+  @Column(name = "meta_generated_name")
+  private String metaGeneratedName;
+
+  @Column(name = "meta_name")
+  private String metaName;
 
   @Column(name = "name", nullable = false)
   private String name;
@@ -95,6 +98,7 @@ public class UserDevfileImpl implements UserDevfile {
     this.name = name;
     this.description = description;
     this.devfile = new DevfileImpl(devfile);
+    syncMeta();
   }
 
   @Override
@@ -131,11 +135,18 @@ public class UserDevfileImpl implements UserDevfile {
 
   @Override
   public Devfile getDevfile() {
-    return devfile;
+    return new DevfileImpl(
+        devfile.getApiVersion(),
+        devfile.getProjects(),
+        devfile.getComponents(),
+        devfile.getCommands(),
+        devfile.getAttributes(),
+        new MetadataImpl(metaName, metaGeneratedName));
   }
 
   public void setDevfile(DevfileImpl devfile) {
     this.devfile = devfile;
+    syncMeta();
   }
 
   public AccountImpl getAccount() {
@@ -146,15 +157,11 @@ public class UserDevfileImpl implements UserDevfile {
     this.account = account;
   }
 
-  @PostLoad
-  public void postLoad() {
-    devfile.getMetadata().setGenerateName(generateName);
-  }
-
-  @PreUpdate
-  @PrePersist
-  public void beforeDb() {
-    generateName = devfile.getMetadata().getGenerateName();
+  private void syncMeta() {
+    MetadataImpl metadata = devfile.getMetadata();
+    metaGeneratedName = metadata.getGenerateName();
+    metaName = metadata.getName();
+    devfile.setMetadata(FAKE_META);
   }
 
   @Override
@@ -165,7 +172,8 @@ public class UserDevfileImpl implements UserDevfile {
     return Objects.equals(id, that.id)
         && devfile.equals(that.devfile)
         && name.equals(that.name)
-        && Objects.equals(description, that.description)
+        && Objects.equals(metaGeneratedName, that.metaGeneratedName)
+        && Objects.equals(metaName, that.metaName)
         && account.equals(that.account);
   }
 
@@ -182,6 +190,12 @@ public class UserDevfileImpl implements UserDevfile {
         + '\''
         + ", devfile="
         + devfile
+        + ", metaGeneratedName='"
+        + metaGeneratedName
+        + '\''
+        + ", metaName='"
+        + metaName
+        + '\''
         + ", name='"
         + name
         + '\''
