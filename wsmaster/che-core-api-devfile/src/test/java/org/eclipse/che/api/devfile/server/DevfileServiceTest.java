@@ -142,9 +142,9 @@ public class DevfileServiceTest {
             .post(SECURE_PATH + "/devfile");
 
     assertEquals(response.getStatusCode(), 201);
-    assertEquals(
-        new UserDevfileImpl(unwrapDto(response, UserDevfileDto.class), TEST_ACCOUNT),
-        userDevfileImpl);
+    UserDevfileDto dto = unwrapDto(response, UserDevfileDto.class);
+    assertEquals(dto.getNamespace(), TEST_ACCOUNT.getName());
+    assertEquals(new UserDevfileImpl(dto, TEST_ACCOUNT), userDevfileImpl);
     verify(userDevfileManager).createDevfile(any(UserDevfile.class));
   }
 

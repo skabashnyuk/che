@@ -44,14 +44,14 @@ public interface UserDevfileDto extends UserDevfile, Hyperlinks {
   @Override
   DevfileDto getDevfile();
 
+  void setDevfile(DevfileDto devfile);
+
   @Override
   String getNamespace();
 
-  void setDevfile(DevfileDto devfile);
-
   void setNamespace(String namespace);
 
-  UserDevfileDto withNamespace(String owner);
+  UserDevfileDto withNamespace(String namespace);
 
   UserDevfileDto withDevfile(DevfileDto devfile);
 

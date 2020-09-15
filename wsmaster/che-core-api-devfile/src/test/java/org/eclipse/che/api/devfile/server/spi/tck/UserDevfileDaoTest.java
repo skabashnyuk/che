@@ -17,6 +17,7 @@ import static java.util.stream.Collectors.toList;
 import static org.eclipse.che.api.devfile.server.TestObjectGenerator.createUserDevfile;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableList;
@@ -121,6 +122,20 @@ public class UserDevfileDaoTest {
 
     assertEquals(
         userDevfileDaoDao.getById(devfile.getId()), Optional.of(new UserDevfileImpl(devfile)));
+  }
+
+  @Test
+  public void shouldCreateUserDevfileWithNullDescription() throws Exception {
+    // given
+    final UserDevfileImpl devfile = createUserDevfile(accounts[0]);
+    devfile.setDescription(null);
+    // when
+    userDevfileDaoDao.create(devfile);
+
+    Optional<UserDevfile> devfileOptional = userDevfileDaoDao.getById(devfile.getId());
+    assertTrue(devfileOptional.isPresent());
+    assertNull(devfileOptional.get().getDescription());
+    assertEquals(devfileOptional, Optional.of(new UserDevfileImpl(devfile)));
   }
 
   @Test(expectedExceptions = NullPointerException.class)

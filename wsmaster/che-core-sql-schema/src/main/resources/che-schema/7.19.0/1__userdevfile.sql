@@ -18,7 +18,7 @@ CREATE TABLE userdevfile (
     devfile_id     BIGINT          NOT NULL UNIQUE,
     generated_name VARCHAR(255) ,
     name VARCHAR(255)  NOT NULL ,
-    description VARCHAR(255)  NOT NULL ,
+    description TEXT ,
     PRIMARY KEY (id)
 );
 CREATE INDEX index_userdevfile_devfile_id ON userdevfile (devfile_id);

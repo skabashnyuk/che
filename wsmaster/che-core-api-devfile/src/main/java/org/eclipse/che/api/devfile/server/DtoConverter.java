@@ -24,6 +24,7 @@ public class DtoConverter {
     return newDto(UserDevfileDto.class)
         .withId(userDevfile.getId())
         .withDevfile(devfileDto)
+        .withNamespace(userDevfile.getNamespace())
         .withName(userDevfile.getName())
         .withDescription(userDevfile.getDescription());
   }
