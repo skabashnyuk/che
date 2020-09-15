@@ -205,6 +205,16 @@ public class JpaUserDevfileDao implements UserDevfileDao {
     }
     List<Pair<String, String>> effectiveOrder = DEFAULT_ORDER;
     if (order != null && !order.isEmpty()) {
+      List<Pair<String, String>> invalidOrder =
+          order
+              .stream()
+              .filter(p -> !p.first.equalsIgnoreCase("name") && !p.first.equalsIgnoreCase("id"))
+              .collect(toList());
+      if (!invalidOrder.isEmpty()) {
+        throw new IllegalArgumentException(
+            "Order allowed only on `name`. But got: " + invalidOrder);
+      }
+
       List<Pair<String, String>> invalidSortOrder =
           order
               .stream()
