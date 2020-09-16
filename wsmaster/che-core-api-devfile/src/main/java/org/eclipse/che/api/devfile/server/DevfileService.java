@@ -203,7 +203,7 @@ public class DevfileService extends Service {
           @QueryParam("maxItems")
           Integer maxItems,
       @ApiParam(
-              "A list of fields and directions of sort. By default items would be sorted by id. Example id:asc,devfile.metadata.name desc.")
+              "A list of fields and directions of sort. By default items would be sorted by id. Example id:asc,name:desc.")
           @QueryParam("order")
           String order)
       throws ServerException, BadRequestException {
