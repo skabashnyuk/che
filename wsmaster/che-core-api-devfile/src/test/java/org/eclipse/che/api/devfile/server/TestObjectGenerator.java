@@ -15,6 +15,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableMap;
 import org.eclipse.che.account.shared.model.Account;
 import org.eclipse.che.account.spi.AccountImpl;
@@ -69,12 +70,16 @@ public class TestObjectGenerator {
         NameGenerator.generate("id", 6), account, NameGenerator.generate("name", 6));
   }
 
-  public static DevfileImpl createDevfile(String name) {
-    return createDevfile(name, "rosetta-");
+  public static DevfileImpl createDevfile(String generatedName) {
+    return createDevfile(null, generatedName);
   }
 
-  public static DevfileImpl createDevfile(String name, String generatedName) {
+  public static DevfileImpl createDevfileWithName(String name) {
+    return createDevfile(name, null);
+  }
 
+  private static DevfileImpl createDevfile(String name, String generatedName) {
+    String effectiveName = MoreObjects.firstNonNull(name, generatedName);
     SourceImpl source1 =
         new SourceImpl(
             "type1",
@@ -103,9 +108,11 @@ public class TestObjectGenerator {
         new ActionImpl("exec2", "component2", "run.sh", "/home/user/2", null, null);
 
     CommandImpl command1 =
-        new CommandImpl(name + "-1", singletonList(action1), singletonMap("attr1", "value1"), null);
+        new CommandImpl(
+            effectiveName + "-1", singletonList(action1), singletonMap("attr1", "value1"), null);
     CommandImpl command2 =
-        new CommandImpl(name + "-2", singletonList(action2), singletonMap("attr2", "value2"), null);
+        new CommandImpl(
+            effectiveName + "-2", singletonList(action2), singletonMap("attr2", "value2"), null);
 
     EntrypointImpl entrypoint1 =
         new EntrypointImpl(
@@ -139,47 +146,41 @@ public class TestObjectGenerator {
         new ComponentImpl(
             "kubernetes",
             "component1",
-            "eclipse/che-theia/0.0.1",
-            ImmutableMap.of("java.home", "/home/user/jdk11"),
-            "https://mysite.com/registry/somepath1",
-            "/dev.yaml",
+            null,
+            null,
+            null,
+            null,
             "refcontent1",
             ImmutableMap.of("app.kubernetes.io/component", "db"),
-            asList(entrypoint1, entrypoint2),
-            "image",
-            "256G",
-            "128M",
-            "2",
-            "130m",
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
             false,
             false,
-            singletonList("command"),
-            singletonList("arg"),
-            asList(volume1, volume2),
+            null,
+            null,
+            null,
             asList(env1, env2),
-            asList(endpoint1, endpoint2));
+            null);
     component1.setSelector(singletonMap("key1", "value1"));
 
     ComponentImpl component2 =
         new ComponentImpl(
-            "kubernetes",
+            "dockerimage",
             "component2",
-            "eclipse/che-theia/0.0.1",
-            ImmutableMap.of(
-                "java.home",
-                "/home/user/jdk11aertwertert",
-                "java.boolean",
-                true,
-                "java.long",
-                123444L),
-            "https://mysite.com/registry/somepath2",
-            "/dev.yaml",
-            "refcontent2",
-            ImmutableMap.of("app.kubernetes.io/component", "webapp"),
-            asList(entrypoint1, entrypoint2),
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
             "image",
             "256G",
-            "256M",
+            null,
             "3",
             "180m",
             false,
@@ -189,14 +190,24 @@ public class TestObjectGenerator {
             asList(volume1, volume2),
             asList(env1, env2),
             asList(endpoint1, endpoint2));
-    component2.setSelector(singletonMap("key2", "value2"));
+    ComponentImpl component3 =
+        new ComponentImpl(
+            "chePlugin",
+            "check/terminal-sample/0.0.1",
+            ImmutableMap.of(
+                "java.home",
+                "/home/user/jdk11aertwertert",
+                "java.boolean",
+                "true",
+                "java.long",
+                "123444L"));
     MetadataImpl metadata = new MetadataImpl(name);
     metadata.setGenerateName(generatedName);
     DevfileImpl devfile =
         new DevfileImpl(
-            "0.0.1",
+            "1.0.0",
             asList(project1, project2),
-            asList(component1, component2),
+            asList(component1, component2, component3),
             asList(command1, command2),
             singletonMap("attribute1", "value1"),
             metadata);

@@ -170,16 +170,17 @@ public class UserDevfileImpl implements UserDevfile {
     if (o == null || getClass() != o.getClass()) return false;
     UserDevfileImpl that = (UserDevfileImpl) o;
     return Objects.equals(id, that.id)
-        && devfile.equals(that.devfile)
-        && name.equals(that.name)
+        && Objects.equals(devfile, that.devfile)
         && Objects.equals(metaGeneratedName, that.metaGeneratedName)
         && Objects.equals(metaName, that.metaName)
-        && account.equals(that.account);
+        && Objects.equals(name, that.name)
+        && Objects.equals(description, that.description)
+        && Objects.equals(account, that.account);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, devfile, name, description, account);
+    return Objects.hash(id, devfile, metaGeneratedName, metaName, name, description, account);
   }
 
   @Override

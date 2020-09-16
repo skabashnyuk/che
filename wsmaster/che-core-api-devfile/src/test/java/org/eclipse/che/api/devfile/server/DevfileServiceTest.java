@@ -19,6 +19,7 @@ import static org.eclipse.che.api.devfile.server.TestObjectGenerator.TEST_ACCOUN
 import static org.eclipse.che.api.devfile.server.TestObjectGenerator.TEST_SUBJECT;
 import static org.eclipse.che.api.devfile.server.TestObjectGenerator.USER_DEVFILE_ID;
 import static org.eclipse.che.api.workspace.server.devfile.Constants.CURRENT_API_VERSION;
+import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_NAME;
 import static org.everrest.assured.JettyHttpServer.ADMIN_USER_PASSWORD;
 import static org.everrest.assured.JettyHttpServer.SECURE_PATH;
@@ -31,8 +32,11 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -50,6 +54,7 @@ import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.core.rest.ApiExceptionMapper;
 import org.eclipse.che.api.core.rest.CheJsonProvider;
 import org.eclipse.che.api.core.rest.ServiceContext;
+import org.eclipse.che.api.core.rest.WebApplicationExceptionMapper;
 import org.eclipse.che.api.core.rest.shared.dto.ServiceError;
 import org.eclipse.che.api.devfile.server.model.impl.UserDevfileImpl;
 import org.eclipse.che.api.devfile.server.spi.UserDevfileDao;
@@ -60,8 +65,8 @@ import org.eclipse.che.api.workspace.server.devfile.schema.DevfileSchemaProvider
 import org.eclipse.che.api.workspace.server.devfile.validator.DevfileIntegrityValidator;
 import org.eclipse.che.api.workspace.server.devfile.validator.DevfileSchemaValidator;
 import org.eclipse.che.api.workspace.shared.dto.devfile.DevfileDto;
+import org.eclipse.che.api.workspace.shared.dto.devfile.MetadataDto;
 import org.eclipse.che.commons.env.EnvironmentContext;
-import org.eclipse.che.commons.json.JsonHelper;
 import org.eclipse.che.commons.lang.NameGenerator;
 import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.dto.server.DtoFactory;
@@ -75,6 +80,7 @@ import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
@@ -82,17 +88,23 @@ import org.testng.annotations.Test;
 public class DevfileServiceTest {
 
   @SuppressWarnings("unused") // is declared for deploying by everrest-assured
-  private ApiExceptionMapper exceptionMapper;
+  ApiExceptionMapper exceptionMapper = new ApiExceptionMapper();
+
+  WebApplicationExceptionMapper exceptionMapper2 = new WebApplicationExceptionMapper();
 
   private DevfileSchemaProvider schemaProvider = new DevfileSchemaProvider();
 
   private static final EnvironmentFilter FILTER = new EnvironmentFilter();
-  CheJsonProvider jsonProvider = new CheJsonProvider(new HashSet<>());
-  private DevfileEntityProvider devfileEntityProvider =
-      new DevfileEntityProvider(
-          new DevfileParser(
-              new DevfileSchemaValidator(new DevfileSchemaProvider()),
-              new DevfileIntegrityValidator(Collections.emptyMap())));
+
+  private DevfileParser devfileParser =
+      new DevfileParser(
+          new DevfileSchemaValidator(new DevfileSchemaProvider()),
+          new DevfileIntegrityValidator(Collections.emptyMap()));
+  DevfileEntityProvider devfileEntityProvider = new DevfileEntityProvider(devfileParser);
+  UserDevfileEntityProvider userDevfileEntityProvider =
+      new UserDevfileEntityProvider(devfileParser);
+  private CheJsonProvider jsonProvider = new CheJsonProvider(new HashSet<>());
+
   @Mock UserDevfileDao userDevfileDao;
   @Mock UserDevfileManager userDevfileManager;
   @Mock EventService eventService;
@@ -122,13 +134,10 @@ public class DevfileServiceTest {
         .thenAnswer((Answer<UserDevfileDto>) invocation -> invocation.getArgument(0));
   }
 
-  @Test
-  public void shouldCreateUserDevfile() throws Exception {
-    final DevfileDto devfileDto =
-        org.eclipse.che.api.workspace.server.DtoConverter.asDto(
-            TestObjectGenerator.createDevfile("devfile-name"));
+  @Test(dataProvider = "validUserDevfiles")
+  public void shouldCreateUserDevfileFromJson(UserDevfileDto userDevfileDto) throws Exception {
     final UserDevfileImpl userDevfileImpl =
-        new UserDevfileImpl("id-123123", TEST_ACCOUNT, "my devfile", "supper cool", devfileDto);
+        new UserDevfileImpl("id-123123", TEST_ACCOUNT, userDevfileDto);
 
     when(userDevfileManager.createDevfile(any(UserDevfile.class))).thenReturn(userDevfileImpl);
 
@@ -137,7 +146,7 @@ public class DevfileServiceTest {
             .auth()
             .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
             .contentType("application/json")
-            .body(devfileDto)
+            .body(DtoFactory.getInstance().toJson(userDevfileDto))
             .when()
             .post(SECURE_PATH + "/devfile");
 
@@ -146,6 +155,28 @@ public class DevfileServiceTest {
     assertEquals(dto.getNamespace(), TEST_ACCOUNT.getName());
     assertEquals(new UserDevfileImpl(dto, TEST_ACCOUNT), userDevfileImpl);
     verify(userDevfileManager).createDevfile(any(UserDevfile.class));
+  }
+
+  @Test(dataProvider = "invalidUserDevfiles")
+  public void shouldFailToCreateInvalidUserDevfileFromJson(
+      UserDevfileDto userDevfileDto, String expectedErrorMessage) throws Exception {
+
+    final Response response =
+        given()
+            .auth()
+            .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
+            .contentType("application/json")
+            .body(DtoFactory.getInstance().toJson(userDevfileDto))
+            .when()
+            .log()
+            .all()
+            .post(SECURE_PATH + "/devfile");
+
+    assertEquals(response.getStatusCode(), 400);
+    ServiceError error = unwrapDto(response, ServiceError.class);
+    assertNotNull(error);
+    assertEquals(error.getMessage(), expectedErrorMessage);
+    verifyNoMoreInteractions(userDevfileManager);
   }
 
   @Test
@@ -190,9 +221,8 @@ public class DevfileServiceTest {
   @Test
   public void shouldThrowNotFoundExceptionWhenUpdatingNonExistingUserDevfile() throws Exception {
     // given
-    final DevfileDto devfileDto =
-        org.eclipse.che.api.workspace.server.DtoConverter.asDto(
-            TestObjectGenerator.createDevfile("devfile-name"));
+    final UserDevfile userDevfile =
+        DtoConverter.asDto(TestObjectGenerator.createUserDevfile("devfile-name"));
 
     doThrow(new NotFoundException(format("User devfile with id %s is not found.", USER_DEVFILE_ID)))
         .when(userDevfileManager)
@@ -203,7 +233,7 @@ public class DevfileServiceTest {
             .auth()
             .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
             .contentType(APPLICATION_JSON)
-            .body(JsonHelper.toJson(devfileDto))
+            .body(DtoFactory.getInstance().toJson(userDevfile))
             .when()
             .put(SECURE_PATH + "/devfile/" + USER_DEVFILE_ID);
     // then
@@ -226,7 +256,9 @@ public class DevfileServiceTest {
             .auth()
             .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
             .contentType(APPLICATION_JSON)
-            .body(JsonHelper.toJson(devfileDto))
+            .body(DtoFactory.getInstance().toJson(devfileDto))
+            .log()
+            .all()
             .when()
             .put(SECURE_PATH + "/devfile/" + devfileDto.getId());
     // then
@@ -236,6 +268,31 @@ public class DevfileServiceTest {
         userDevfileImpl);
     verify(userDevfileManager).updateUserDevfile(devfileDto);
     verify(linksInjector).injectLinks(any(), any());
+  }
+
+  @Test(dataProvider = "invalidUserDevfiles")
+  public void shouldFailToUpdateWithInvalidUserDevfile(
+      UserDevfileDto userDevfileDto, String expectedErrorMessage) throws Exception {
+    // given
+    userDevfileDto = userDevfileDto.withId("id-123");
+    // when
+    final Response response =
+        given()
+            .auth()
+            .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
+            .contentType(APPLICATION_JSON)
+            .body(DtoFactory.getInstance().toJson(userDevfileDto))
+            .log()
+            .all()
+            .when()
+            .put(SECURE_PATH + "/devfile/" + userDevfileDto.getId());
+    // then
+    assertEquals(response.getStatusCode(), 400);
+    ServiceError error = unwrapDto(response, ServiceError.class);
+    assertNotNull(error);
+    assertEquals(error.getMessage(), expectedErrorMessage);
+    verifyZeroInteractions(userDevfileManager);
+    verifyZeroInteractions(linksInjector);
   }
 
   @Test
@@ -257,7 +314,7 @@ public class DevfileServiceTest {
             .auth()
             .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
             .contentType(APPLICATION_JSON)
-            .body(JsonHelper.toJson(devfileDto))
+            .body(DtoFactory.getInstance().toJson(devfileDto))
             .when()
             .put(SECURE_PATH + "/devfile/" + newID);
     // then
@@ -401,6 +458,71 @@ public class DevfileServiceTest {
     verify(userDevfileManager).getUserDevfiles(eq(30), eq(0), anyList(), orderCaptor.capture());
     assertEquals(
         orderCaptor.getValue(), ImmutableList.of(new Pair("id", "asc"), new Pair("name", "desc")));
+  }
+
+  @DataProvider
+  public Object[][] validUserDevfiles() {
+    return new Object[][] {
+      {
+        newDto(UserDevfileDto.class)
+            .withName("My devfile")
+            .withDescription("Devfile description")
+            .withDevfile(
+                newDto(DevfileDto.class)
+                    .withApiVersion("1.0.0")
+                    .withMetadata(newDto(MetadataDto.class).withName("name")))
+      },
+      {
+        newDto(UserDevfileDto.class)
+            .withName(null)
+            .withDescription("Devfile description")
+            .withDevfile(
+                newDto(DevfileDto.class)
+                    .withApiVersion("1.0.0")
+                    .withMetadata(newDto(MetadataDto.class).withName("name")))
+      },
+      {
+        newDto(UserDevfileDto.class)
+            .withName("My devfile")
+            .withDevfile(
+                newDto(DevfileDto.class)
+                    .withApiVersion("1.0.0")
+                    .withMetadata(newDto(MetadataDto.class).withName("name")))
+      },
+      {
+        newDto(UserDevfileDto.class)
+            .withName("My devfile")
+            .withDescription("Devfile description")
+            .withDevfile(
+                newDto(DevfileDto.class)
+                    .withApiVersion("1.0.0")
+                    .withMetadata(newDto(MetadataDto.class).withGenerateName("gen-")))
+      },
+      {DtoConverter.asDto(TestObjectGenerator.createUserDevfile())}
+    };
+  }
+
+  @DataProvider
+  public Object[][] invalidUserDevfiles() {
+    return new Object[][] {
+      {
+        newDto(UserDevfileDto.class)
+            .withName("My devfile")
+            .withDescription("Devfile description")
+            .withDevfile(null),
+        "Mandatory field `devfile` is not defined."
+      },
+      {
+        newDto(UserDevfileDto.class)
+            .withName("My devfile")
+            .withDescription("Devfile description")
+            .withDevfile(
+                newDto(DevfileDto.class)
+                    .withApiVersion(null)
+                    .withMetadata(newDto(MetadataDto.class).withName("name"))),
+        "Devfile schema validation failed. Error: The object must have a property whose name is \"apiVersion\"."
+      }
+    };
   }
 
   private static <T> T unwrapDto(Response response, Class<T> dtoClass) {

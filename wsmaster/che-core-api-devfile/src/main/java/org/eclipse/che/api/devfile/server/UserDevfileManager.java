@@ -66,15 +66,21 @@ public class UserDevfileManager {
    */
   public UserDevfile createDevfile(UserDevfile userDevfile)
       throws ServerException, NotFoundException, ConflictException {
-    requireNonNull(userDevfile, "Required non-null devfile");
-
+    requireNonNull(userDevfile, "Required non-null userdevfile");
+    requireNonNull(userDevfile.getDevfile(), "Required non-null devfile");
+    String name =
+        userDevfile.getName() != null
+            ? userDevfile.getName()
+            : NameGenerator.generate("devfile-", 5);
     UserDevfile result =
         userDevfileDao.create(
             new UserDevfileImpl(
                 NameGenerator.generate("id-", 16),
                 accountManager.getByName(
                     EnvironmentContext.getCurrent().getSubject().getUserName()),
-                userDevfile));
+                name,
+                userDevfile.getDescription(),
+                userDevfile.getDevfile()));
     LOG.debug(
         "UserDevfile '{}' with id '{}' created by user '{}'",
         result.getName(),
