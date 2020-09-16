@@ -99,7 +99,7 @@ public class DevfileService extends Service {
   @Consumes({APPLICATION_JSON, "text/yaml", "text/x-yaml"})
   @Produces(APPLICATION_JSON)
   @ApiOperation(
-      value = "Creates a new persistent Devfile from Devfile",
+      value = "Creates a new persistent Devfile from yaml representation",
       consumes = "application/json, text/yaml, text/x-yaml",
       produces = APPLICATION_JSON,
       nickname = "create",
