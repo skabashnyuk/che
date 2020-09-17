@@ -21,7 +21,7 @@ public class UserDevfileDomain extends AbstractPermissionsDomain<UserDevfilePerm
   public static final String READ = "read";
   public static final String DELETE = "delete";
   public static final String UPDATE = "update";
-  public static final String DOMAIN_ID = "userDevfile";
+  public static final String DOMAIN_ID = "devfile";
 
   public UserDevfileDomain() {
     super(DOMAIN_ID, ImmutableList.of(READ, DELETE, UPDATE));

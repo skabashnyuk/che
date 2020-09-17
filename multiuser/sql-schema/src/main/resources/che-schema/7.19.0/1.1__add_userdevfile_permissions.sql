@@ -27,7 +27,7 @@ ALTER TABLE che_userdevfile_permissions ADD CONSTRAINT che_fk_userdevfile_permis
 --------------------------------------------------------------------------------
 
 
--- Worker actions --------------------------------------------------------------
+-- User devfile permission actions --------------------------------------------------------------
 CREATE TABLE che_userdevfile_permissions_actions (
   userdevfile_permissions_id       VARCHAR(255),
   actions         VARCHAR(255)
